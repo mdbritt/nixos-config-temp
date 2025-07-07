@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NixOS Migration Configs</title>
+    <title>NixOS Migration - Complete Configuration</title>
     <style>
         body {
             font-family: monospace;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             background: #1e1e1e;
             color: #e0e0e0;
         }
-        h1, h2 {
+        h1, h2, h3 {
             color: #76cce0;
+        }
+        .section {
+            margin-bottom: 40px;
+            border-left: 3px solid #76cce0;
+            padding-left: 20px;
         }
         .config-section {
             margin-bottom: 30px;
@@ -26,7 +31,13 @@
         .file-path {
             color: #9ed072;
             font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .file-description {
+            color: #b39df3;
             margin-bottom: 10px;
+            font-style: italic;
         }
         pre {
             background: #1a1a1a;
@@ -34,6 +45,8 @@
             border-radius: 5px;
             overflow-x: auto;
             border: 1px solid #333;
+            max-height: 600px;
+            overflow-y: auto;
         }
         button {
             background: #76cce0;
@@ -52,7 +65,7 @@
         .warning {
             background: #fc5d7c;
             color: #1e1e1e;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
             font-weight: bold;
@@ -60,43 +73,845 @@
         .note {
             background: #e7c664;
             color: #1e1e1e;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
+        }
+        .success {
+            background: #9ed072;
+            color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .command {
+            background: #363944;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .toc {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        .toc a {
+            color: #76cce0;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <h1>NixOS Migration Configuration Files</h1>
+    <h1>NixOS Migration - Complete Configuration</h1>
     
     <div class="warning">
-        ⚠️ CRITICAL: In hyprland.conf, remove or comment out "sensitivity = 0" on line 17 or your mouse won't work!
-    </div>
-    
-    <div class="note">
-        📝 Create directories first: mkdir -p ~/.config/{hyprland,waybar,foot,fish}
+        ⚠️ CRITICAL FIXES:
+        <ul>
+            <li>In hyprland.conf: Remove/comment "sensitivity = 0" or your mouse won't work!</li>
+            <li>In modules/users.nix: Change username from 'mike' to your actual username</li>
+            <li>In modules/networking.nix: Change hostname from 'nixos' to your preferred name</li>
+            <li>In configuration.nix: Change timezone to your location</li>
+        </ul>
     </div>
 
-    <div class="config-section">
-        <div class="file-path">~/.config/hyprland/hyprland.conf</div>
-        <button onclick="copyConfig('hyprland-config')">Copy to Clipboard</button>
-        <pre id="hyprland-config"># Hyprland Configuration - Phase 1
-# Basic functional setup matching yabai behavior
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#system">System Configuration (/etc/nixos/)</a>
+                <ul>
+                    <li><a href="#main-config">Main configuration.nix</a></li>
+                    <li><a href="#modules">NixOS Modules</a></li>
+                </ul>
+            </li>
+            <li><a href="#user">User Configuration (~/.config/)</a>
+                <ul>
+                    <li><a href="#hyprland-config">Hyprland</a></li>
+                    <li><a href="#waybar-config">Waybar</a></li>
+                    <li><a href="#foot-config">Foot Terminal</a></li>
+                    <li><a href="#fish-config">Fish Shell</a></li>
+                </ul>
+            </li>
+            <li><a href="#installation">Installation Steps</a></li>
+        </ul>
+    </div>
+
+    <section id="system" class="section">
+        <h2>System Configuration Files (/etc/nixos/)</h2>
+        
+        <div class="note">
+            📁 These files go in /etc/nixos/ and require sudo to edit
+        </div>
+
+        <div id="main-config" class="config-section">
+            <div class="file-path">/etc/nixos/configuration.nix</div>
+            <div class="file-description">Main NixOS configuration that imports all modules</div>
+            <button onclick="copyConfig('configuration-nix')">Copy to Clipboard</button>
+            <pre id="configuration-nix">{ config, pkgs, ... }:
+
+{
+  imports = [
+    # Hardware configuration
+    ./hardware-configuration.nix
+    
+    # Custom modules
+    ./modules/hardware.nix
+    ./modules/boot.nix
+    ./modules/networking.nix
+    ./modules/audio.nix
+    ./modules/hyprland.nix
+    ./modules/packages.nix
+    ./modules/shell.nix
+    ./modules/users.nix
+    ./modules/fonts.nix
+  ];
+
+  # System version - DON'T CHANGE
+  system.stateVersion = "24.05";
+  
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+  
+  # Time zone and locale
+  time.timeZone = "America/New_York"; # CHANGE THIS to your timezone
+  i18n.defaultLocale = "en_US.UTF-8";
+}</pre>
+        </div>
+
+        <div id="modules" class="section">
+            <h3>NixOS Modules (/etc/nixos/modules/)</h3>
+            
+            <div class="command">
+                sudo mkdir -p /etc/nixos/modules
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/hardware.nix</div>
+                <div class="file-description">Hardware configuration: graphics, firmware, SSD optimization</div>
+                <button onclick="copyConfig('hardware-nix')">Copy to Clipboard</button>
+                <pre id="hardware-nix">{ config, pkgs, ... }:
+
+{
+  # Enable OpenGL
+  hardware.opengl = {
+    enable = true;
+    driSupport = true;
+    driSupport32Bit = true;
+    
+    # Additional video acceleration
+    extraPackages = with pkgs; [
+      intel-media-driver # For Intel GPUs
+      vaapiIntel        # For older Intel GPUs
+      vaapiVdpau
+      libvdpau-va-gl
+    ];
+  };
+  
+  # Enable firmware updates
+  services.fwupd.enable = true;
+  
+  # CPU microcode updates
+  hardware.cpu.intel.updateMicrocode = true; # Or hardware.cpu.amd.updateMicrocode for AMD
+  
+  # Enable SSD TRIM
+  services.fstrim.enable = true;
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/boot.nix</div>
+                <div class="file-description">Bootloader and kernel configuration</div>
+                <button onclick="copyConfig('boot-nix')">Copy to Clipboard</button>
+                <pre id="boot-nix">{ config, pkgs, ... }:
+
+{
+  # Bootloader configuration
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
+    
+    # Show boot menu for 3 seconds
+    timeout = 3;
+  };
+  
+  # Kernel parameters
+  boot.kernelParams = [
+    "quiet"
+    "splash"
+    # Add "nvidia-drm.modeset=1" if using NVIDIA
+  ];
+  
+  # Use latest kernel
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  
+  # Enable NTFS support (for dual boot)
+  boot.supportedFilesystems = [ "ntfs" ];
+  
+  # Cleaning /tmp on boot
+  boot.tmp.cleanOnBoot = true;
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/networking.nix</div>
+                <div class="file-description">Network configuration and firewall</div>
+                <button onclick="copyConfig('networking-nix')">Copy to Clipboard</button>
+                <pre id="networking-nix">{ config, pkgs, ... }:
+
+{
+  # Hostname
+  networking.hostName = "nixos"; # CHANGE THIS to your preferred hostname
+  
+  # NetworkManager for easy WiFi management
+  networking.networkmanager.enable = true;
+  
+  # Enable firewall
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 
+      # 22  # SSH - uncomment if needed
+    ];
+    allowedUDPPorts = [ ];
+  };
+  
+  # Enable mDNS for local network discovery
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
+  
+  # Optimize network performance
+  boot.kernel.sysctl = {
+    "net.ipv4.tcp_congestion_control" = "bbr";
+    "net.core.default_qdisc" = "cake";
+  };
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/audio.nix</div>
+                <div class="file-description">PipeWire audio configuration</div>
+                <button onclick="copyConfig('audio-nix')">Copy to Clipboard</button>
+                <pre id="audio-nix">{ config, pkgs, ... }:
+
+{
+  # Enable sound
+  sound.enable = true;
+  
+  # Disable PulseAudio (we'll use PipeWire)
+  hardware.pulseaudio.enable = false;
+  
+  # Enable realtime scheduling for audio
+  security.rtkit.enable = true;
+  
+  # PipeWire configuration
+  services.pipewire = {
+    enable = true;
+    
+    # Enable ALSA support
+    alsa = {
+      enable = true;
+      support32Bit = true;
+    };
+    
+    # PulseAudio compatibility
+    pulse.enable = true;
+    
+    # JACK compatibility
+    jack.enable = true;
+    
+    # WirePlumber (PipeWire session manager)
+    wireplumber.enable = true;
+  };
+  
+  # Audio-related packages
+  environment.systemPackages = with pkgs; [
+    pavucontrol      # GUI volume control
+    pamixer          # CLI volume control
+    playerctl        # Media player control
+    pulseaudio       # For pactl commands
+  ];
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/hyprland.nix</div>
+                <div class="file-description">Hyprland Wayland compositor setup</div>
+                <button onclick="copyConfig('hyprland-nix')">Copy to Clipboard</button>
+                <pre id="hyprland-nix">{ config, pkgs, ... }:
+
+{
+  # Enable Hyprland
+  programs.hyprland = {
+    enable = true;
+    xwayland.enable = true;
+  };
+  
+  # XDG Desktop Portal
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.common.default = "*";
+  };
+  
+  # Session variables for Wayland
+  environment.sessionVariables = {
+    # Wayland specific
+    NIXOS_OZONE_WL = "1";             # Enable Wayland for Electron apps
+    MOZ_ENABLE_WAYLAND = "1";         # Enable Wayland for Firefox
+    QT_QPA_PLATFORM = "wayland";      # Qt apps use Wayland
+    SDL_VIDEODRIVER = "wayland";      # SDL apps use Wayland
+    CLUTTER_BACKEND = "wayland";      # Clutter apps use Wayland
+    
+    # XDG specifications
+    XDG_CURRENT_DESKTOP = "Hyprland";
+    XDG_SESSION_TYPE = "wayland";
+    XDG_SESSION_DESKTOP = "Hyprland";
+    
+    # Cursor
+    WLR_NO_HARDWARE_CURSORS = "1";    # Fix cursor issues
+    
+    # Editor
+    EDITOR = "hx";
+    VISUAL = "hx";
+    BROWSER = "firefox";
+  };
+  
+  # Display manager - Using greetd with tuigreet
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --cmd Hyprland";
+        user = "greeter";
+      };
+    };
+  };
+  
+  # Hyprland-specific packages
+  environment.systemPackages = with pkgs; [
+    # Wayland utilities
+    wayland-utils
+    wl-clipboard
+    wlr-randr
+    
+    # Screenshot tools
+    grim
+    slurp
+    
+    # Wallpaper
+    swww
+    
+    # Notifications
+    dunst
+    libnotify
+    
+    # App launcher
+    rofi-wayland
+    
+    # Status bar
+    waybar
+    
+    # Authentication agent
+    polkit_gnome
+    
+    # Screen brightness control
+    brightnessctl
+    
+    # Idle management
+    swayidle
+    swaylock-effects
+  ];
+  
+  # Enable polkit
+  security.polkit.enable = true;
+  
+  # Start polkit agent with Hyprland
+  systemd.user.services.polkit-gnome-authentication-agent-1 = {
+    description = "polkit-gnome-authentication-agent-1";
+    wantedBy = [ "graphical-session.target" ];
+    wants = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+      Restart = "on-failure";
+      RestartSec = 1;
+      TimeoutStopSec = 10;
+    };
+  };
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/packages.nix</div>
+                <div class="file-description">General system packages</div>
+                <button onclick="copyConfig('packages-nix')">Copy to Clipboard</button>
+                <pre id="packages-nix">{ config, pkgs, ... }:
+
+{
+  environment.systemPackages = with pkgs; [
+    # Core utilities
+    wget
+    curl
+    git
+    vim
+    htop
+    btop
+    neofetch
+    unzip
+    zip
+    tree
+    file
+    which
+    gnumake
+    gcc
+    
+    # Modern CLI tools (replacements)
+    ripgrep      # Better grep
+    fd           # Better find
+    eza          # Better ls
+    bat          # Better cat
+    delta        # Better git diff
+    duf          # Better df
+    dust         # Better du
+    
+    # Development tools
+    helix
+    neovim
+    lazygit
+    gh           # GitHub CLI
+    jq           # JSON processor
+    yq           # YAML processor
+    
+    # Terminal emulators
+    foot
+    kitty        # Backup option
+    
+    # File management
+    yazi         # Terminal file manager
+    xdg-utils    # xdg-open, etc.
+    
+    # Network tools
+    nmap
+    traceroute
+    dig
+    netcat
+    
+    # System monitoring
+    iotop
+    iftop
+    nethogs
+    
+    # Archive tools
+    p7zip
+    unrar
+    
+    # Media tools
+    ffmpeg
+    imagemagick
+    
+    # Browsers
+    firefox
+    chromium
+    
+    # GUI text editors
+    kate         # KDE text editor
+    
+    # Communication
+    discord
+    slack
+    
+    # Office
+    libreoffice
+    
+    # Media players
+    vlc
+    mpv
+    
+    # Image viewers
+    feh
+    imv
+    
+    # PDF viewer
+    zathura
+    
+    # System utilities
+    gparted
+    ventoy        # USB boot tool
+    
+    # Virtualization (optional)
+    # virt-manager
+    # qemu
+    
+    # Development languages/tools (add as needed)
+    # rustup
+    # go
+    # nodejs
+    # python3
+    # docker
+  ];
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/shell.nix</div>
+                <div class="file-description">Fish shell system configuration</div>
+                <button onclick="copyConfig('shell-nix')">Copy to Clipboard</button>
+                <pre id="shell-nix">{ config, pkgs, ... }:
+
+{
+  # Enable Fish shell system-wide
+  programs.fish.enable = true;
+  
+  # Fish plugins and configuration
+  programs.fish = {
+    shellAliases = {
+      # Directory navigation
+      ".." = "cd ..";
+      "..." = "cd ../..";
+      "...." = "cd ../../..";
+      home = "cd ~";
+      
+      # Git aliases
+      g = "lazygit";
+      gs = "git status";
+      ga = "git add";
+      gc = "git commit";
+      gp = "git push";
+      gl = "git pull";
+      gd = "git diff";
+      glog = "git log --oneline --graph --decorate";
+      
+      # Modern CLI replacements
+      ls = "eza --icons";
+      ll = "eza -la --icons";
+      la = "eza -a --icons";
+      lt = "eza --tree --icons";
+      cat = "bat";
+      find = "fd";
+      grep = "rg";
+      
+      # System management
+      rebuild = "sudo nixos-rebuild switch";
+      update = "sudo nix-channel --update";
+      upgrade = "sudo nixos-rebuild switch --upgrade";
+      gc = "sudo nix-collect-garbage -d";
+      optimize = "sudo nix-store --optimize";
+      
+      # Convenience
+      c = "clear";
+      x = "exit";
+      v = "hx";  # Use helix
+      n = "yazi";
+      
+      # Safety aliases
+      cp = "cp -i";
+      mv = "mv -i";
+      rm = "rm -i";
+      
+      # Colorful commands
+      ip = "ip --color=auto";
+      diff = "diff --color=auto";
+      
+      # Quick edits
+      conf = "cd ~/.config";
+      nixconf = "cd /etc/nixos";
+      
+      # SSH with proper TERM
+      ssh = "env TERM=xterm-256color ssh";
+    };
+    
+    # Interactive shell init
+    interactiveShellInit = ''
+      # Disable greeting
+      set -g fish_greeting
+      
+      # Initialize starship
+      ${pkgs.starship}/bin/starship init fish | source
+      
+      # Initialize zoxide
+      ${pkgs.zoxide}/bin/zoxide init fish | source
+      
+      # Set color variables (Sonokai theme)
+      set -gx BLACK 0xff181819
+      set -gx WHITE 0xffe2e2e3
+      set -gx RED 0xfffc5d7c
+      set -gx GREEN 0xff9ed072
+      set -gx BLUE 0xff76cce0
+      set -gx YELLOW 0xffe7c664
+      set -gx ORANGE 0xfff39660
+      set -gx MAGENTA 0xffb39df3
+      set -gx GREY 0xff7f8490
+      set -gx TRANSPARENT 0x00000000
+      set -gx BG0 0xff2c2e34
+      set -gx BG1 0xff363944
+      set -gx BG2 0xff414550
+      
+      # Better ls after cd
+      function cd
+          builtin cd $argv
+          and eza --icons
+      end
+      
+      # Quick navigation with zoxide
+      function z
+          __zoxide_z $argv
+          and eza --icons
+      end
+      
+      # Extract archives
+      function extract
+          switch $argv[1]
+              case '*.tar.bz2'
+                  tar xjf $argv[1]
+              case '*.tar.gz'
+                  tar xzf $argv[1]
+              case '*.bz2'
+                  bunzip2 $argv[1]
+              case '*.rar'
+                  unrar x $argv[1]
+              case '*.gz'
+                  gunzip $argv[1]
+              case '*.tar'
+                  tar xf $argv[1]
+              case '*.tbz2'
+                  tar xjf $argv[1]
+              case '*.tgz'
+                  tar xzf $argv[1]
+              case '*.zip'
+                  unzip $argv[1]
+              case '*.Z'
+                  uncompress $argv[1]
+              case '*.7z'
+                  7z x $argv[1]
+              case '*'
+                  echo "'$argv[1]' cannot be extracted"
+          end
+      end
+      
+      # Keybindings
+      bind \cf 'zi'  # Ctrl+F for interactive zoxide
+    '';
+  };
+  
+  # Bash as backup shell
+  programs.bash = {
+    enableCompletion = true;
+    # Basic aliases for bash users
+    shellAliases = config.programs.fish.shellAliases;
+  };
+  
+  # Shell-related packages
+  environment.systemPackages = with pkgs; [
+    # Shell and plugins
+    fish
+    fishPlugins.done
+    fishPlugins.fzf-fish
+    fishPlugins.forgit
+    fishPlugins.autopair
+    
+    # Shell enhancements
+    starship      # Prompt
+    zoxide        # Better cd
+    fzf           # Fuzzy finder
+    direnv        # Environment management
+    tmux          # Terminal multiplexer
+  ];
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/users.nix</div>
+                <div class="file-description">User account configuration</div>
+                <button onclick="copyConfig('users-nix')">Copy to Clipboard</button>
+                <pre id="users-nix">{ config, pkgs, ... }:
+
+{
+  # Define user accounts
+  users.users.mike = {  # CHANGE 'mike' to your username
+    isNormalUser = true;
+    description = "Mike";  # CHANGE to your name
+    
+    # User groups
+    extraGroups = [
+      "wheel"           # sudo access
+      "networkmanager"  # Network configuration
+      "video"           # Video device access
+      "audio"           # Audio device access
+      "input"           # Input device access
+      "disk"            # Disk device access
+      "libvirtd"        # Virtualization (if needed)
+      "docker"          # Docker (if needed)
+    ];
+    
+    # Default shell
+    shell = pkgs.fish;
+    
+    # Create home directory if it doesn't exist
+    createHome = true;
+    home = "/home/mike";  # CHANGE to match your username
+    
+    # Initial password (change it after first login!)
+    # You can generate a hashed password with: mkpasswd -m sha-512
+    # For now, this sets password to "changeme"
+    initialPassword = "changeme";
+  };
+  
+  # Allow wheel group to use sudo
+  security.sudo = {
+    enable = true;
+    wheelNeedsPassword = true;  # Set to false if you want passwordless sudo
+    
+    # Custom sudo rules
+    extraRules = [
+      {
+        groups = [ "wheel" ];
+        commands = [
+          {
+            command = "/run/current-system/sw/bin/nixos-rebuild";
+            options = [ "NOPASSWD" ];  # Allow passwordless nixos-rebuild
+          }
+        ];
+      }
+    ];
+  };
+  
+  # User-specific environment variables
+  environment.variables = {
+    EDITOR = "hx";
+    VISUAL = "hx";
+  };
+}</pre>
+            </div>
+
+            <div class="config-section">
+                <div class="file-path">/etc/nixos/modules/fonts.nix</div>
+                <div class="file-description">System fonts configuration</div>
+                <button onclick="copyConfig('fonts-nix')">Copy to Clipboard</button>
+                <pre id="fonts-nix">{ config, pkgs, ... }:
+
+{
+  # Font packages
+  fonts.packages = with pkgs; [
+    # Nerd Fonts (includes icons)
+    (nerdfonts.override { 
+      fonts = [ 
+        "JetBrainsMono"
+        "FiraCode" 
+        "Hack"
+        "RobotoMono"
+        "SourceCodePro"
+        "UbuntuMono"
+      ]; 
+    })
+    
+    # System fonts
+    noto-fonts
+    noto-fonts-cjk
+    noto-fonts-emoji
+    liberation_ttf
+    
+    # Icon fonts
+    font-awesome
+    material-icons
+    
+    # Microsoft compatibility fonts
+    corefonts
+    vistafonts
+    
+    # Programming fonts (non-nerd variants)
+    fira-code
+    jetbrains-mono
+    hack-font
+    
+    # UI fonts
+    inter
+    roboto
+    ubuntu_font_family
+    
+    # Terminal fonts
+    terminus_font
+    inconsolata
+  ];
+  
+  # Font configuration
+  fonts = {
+    # Enable default fonts
+    enableDefaultPackages = true;
+    
+    # Font settings
+    fontconfig = {
+      enable = true;
+      
+      # Default fonts
+      defaultFonts = {
+        serif = [ "Noto Serif" "Liberation Serif" ];
+        sansSerif = [ "Inter" "Noto Sans" "Liberation Sans" ];
+        monospace = [ "JetBrainsMono Nerd Font" "FiraCode Nerd Font" ];
+        emoji = [ "Noto Color Emoji" ];
+      };
+      
+      # Improve font rendering
+      antialias = true;
+      hinting = {
+        enable = true;
+        style = "slight";
+      };
+      
+      subpixel = {
+        rgba = "rgb";
+        lcdfilter = "default";
+      };
+    };
+  };
+}</pre>
+            </div>
+        </div>
+    </section>
+
+    <section id="user" class="section">
+        <h2>User Configuration Files (~/.config/)</h2>
+        
+        <div class="note">
+            📁 These files go in your home directory under ~/.config/
+        </div>
+
+        <div class="command">
+            mkdir -p ~/.config/hypr ~/.config/waybar ~/.config/foot ~/.config/fish
+        </div>
+
+        <div id="hyprland-config" class="config-section">
+            <div class="file-path">~/.config/hypr/hyprland.conf</div>
+            <div class="file-description">Hyprland window manager configuration</div>
+            <button onclick="copyConfig('hyprland-conf')">Copy to Clipboard</button>
+            <pre id="hyprland-conf"># Hyprland Configuration
+# Matching yabai + skhd behavior from macOS
 
 # Monitor configuration
-# Adjust this based on your display setup
 monitor=,preferred,auto,1
 
 # Execute at launch
-exec-once = waybar
-exec-once = dunst
-exec-once = swww init
+exec-once = waybar &
+exec-once = dunst &
+exec-once = swww init &
+exec-once = /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
 # Input configuration
 input {
     kb_layout = us
     follow_mouse = 1
-    # sensitivity = 0.0    # COMMENTED OUT - remove this line entirely or set to 0.0
+    # sensitivity = 0.0    # Default - adjust if needed
     
     touchpad {
         natural_scroll = false
@@ -133,7 +948,7 @@ decoration {
     col.shadow = rgba(1a1a1aee)
 }
 
-# Animations
+# Animations (matching yabai's 0.5s duration)
 animations {
     enabled = true
     
@@ -167,6 +982,11 @@ windowrulev2 = noanim,class:^(xwaylandvideobridge)$
 windowrulev2 = nofocus,class:^(xwaylandvideobridge)$
 windowrulev2 = noinitialfocus,class:^(xwaylandvideobridge)$
 
+# Floating windows
+windowrulev2 = float,class:^(pavucontrol)$
+windowrulev2 = float,class:^(nm-connection-editor)$
+windowrulev2 = float,title:^(Picture-in-Picture)$
+
 # Workspace rules - 10 workspaces like yabai
 workspace = 1, default:true
 workspace = 2
@@ -179,28 +999,32 @@ workspace = 8
 workspace = 9
 workspace = 10
 
-# Key bindings
+# Key bindings (matching yabai/skhd)
 $mainMod = ALT
 
-# Basic window management
+# Window Navigation: Alt + {j,k,l,ö}
 bind = $mainMod, J, movefocus, l
 bind = $mainMod, K, movefocus, d
 bind = $mainMod, L, movefocus, u
-bind = $mainMod, semicolon, movefocus, r  # Ö key position on US layout
+bind = $mainMod, semicolon, movefocus, r  # Ö key on US layout
 
-# Move windows
+# Extended navigation
+bind = $mainMod, H, focuswindow, first
+bind = $mainMod, apostrophe, focuswindow, last  # Ä key position
+
+# Move windows: Shift + Alt + {j,k,l,ö}
 bind = $mainMod SHIFT, J, movewindow, l
 bind = $mainMod SHIFT, K, movewindow, d
 bind = $mainMod SHIFT, L, movewindow, u
 bind = $mainMod SHIFT, semicolon, movewindow, r
 
-# Resize windows
+# Resize windows: Ctrl + Alt + {j,k,l,ö}
 bind = $mainMod CTRL, J, resizeactive, -100 0
 bind = $mainMod CTRL, K, resizeactive, 0 100
 bind = $mainMod CTRL, L, resizeactive, 0 -100
 bind = $mainMod CTRL, semicolon, resizeactive, 100 0
 
-# Workspace switching
+# Workspace switching: Alt + {1-9,0}
 bind = $mainMod, 1, workspace, 1
 bind = $mainMod, 2, workspace, 2
 bind = $mainMod, 3, workspace, 3
@@ -212,7 +1036,7 @@ bind = $mainMod, 8, workspace, 8
 bind = $mainMod, 9, workspace, 9
 bind = $mainMod, 0, workspace, 10
 
-# Move to workspace
+# Move to workspace: Shift + Alt + {1-9,0}
 bind = $mainMod SHIFT, 1, movetoworkspace, 1
 bind = $mainMod SHIFT, 2, movetoworkspace, 2
 bind = $mainMod SHIFT, 3, movetoworkspace, 3
@@ -224,39 +1048,65 @@ bind = $mainMod SHIFT, 8, movetoworkspace, 8
 bind = $mainMod SHIFT, 9, movetoworkspace, 9
 bind = $mainMod SHIFT, 0, movetoworkspace, 10
 
+# Move between workspaces
+bind = $mainMod SHIFT, P, movetoworkspace, -1
+bind = $mainMod SHIFT, N, movetoworkspace, +1
+
 # Window control
 bind = $mainMod, Q, killactive
 bind = $mainMod, SPACE, togglefloating
 bind = $mainMod, F, fullscreen, 0
 bind = $mainMod SHIFT, F, fullscreen, 1  # Maximize
-bind = $mainMod, P, pseudo  # Dwindle
-bind = $mainMod SHIFT, S, togglesplit  # Dwindle
+bind = $mainMod, P, pseudo
+bind = $mainMod SHIFT, S, togglesplit
 
-# Balance windows (like yabai)
-bind = $mainMod CTRL, E, exec, hyprctl dispatch layoutmsg "removemaster"
+# Mirror/rotate
+bind = $mainMod SHIFT, X, layoutmsg, orientationcycle
+bind = $mainMod SHIFT, Y, layoutmsg, orientationcycle
+
+# Stack mode (similar to yabai)
+bind = $mainMod CTRL, N, layoutmsg, cyclenext
+bind = $mainMod CTRL, P, layoutmsg, cycleprev
+
+# Balance windows
+bind = $mainMod CTRL, E, layoutmsg, removemaster
 
 # Toggle gaps
-bind = $mainMod CTRL, G, exec, hyprctl keyword general:gaps_in 5; hyprctl keyword general:gaps_out 10
-bind = $mainMod CTRL SHIFT, G, exec, hyprctl keyword general:gaps_in 0; hyprctl keyword general:gaps_out 0
+bind = $mainMod CTRL, G, exec, hyprctl keyword general:gaps_in 5 && hyprctl keyword general:gaps_out 10
+bind = $mainMod CTRL SHIFT, G, exec, hyprctl keyword general:gaps_in 0 && hyprctl keyword general:gaps_out 0
 
 # Application launching
 bind = $mainMod, Return, exec, foot
-bind = $mainMod, D, exec, rofi -show drun
+bind = $mainMod, D, exec, rofi -show drun -show-icons
 bind = $mainMod SHIFT, D, exec, rofi -show run
+bind = $mainMod, V, exec, rofi -show window
+
+# Split windows (like yabai)
+bind = $mainMod, S, exec, hyprctl dispatch splitratio 0.5
+bind = $mainMod, V, exec, hyprctl dispatch splitratio -0.5
 
 # Exit Hyprland
 bind = $mainMod SHIFT, E, exit
 
+# Lock screen
+bind = $mainMod SHIFT, L, exec, swaylock
+
 # Screenshots
 bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
 bind = SHIFT, Print, exec, grim - | wl-copy
+bind = CTRL, Print, exec, grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 
 # Volume control
 binde = , XF86AudioRaiseVolume, exec, pamixer -i 5
 binde = , XF86AudioLowerVolume, exec, pamixer -d 5
 bind = , XF86AudioMute, exec, pamixer -t
 
-# Brightness control (remove these lines if on desktop)
+# Media control
+bind = , XF86AudioPlay, exec, playerctl play-pause
+bind = , XF86AudioNext, exec, playerctl next
+bind = , XF86AudioPrev, exec, playerctl previous
+
+# Brightness control (for laptops)
 binde = , XF86MonBrightnessUp, exec, brightnessctl set +10%
 binde = , XF86MonBrightnessDown, exec, brightnessctl set 10%-
 
@@ -266,26 +1116,35 @@ bindm = $mainMod, mouse:273, resizewindow
 
 # Scroll through workspaces
 bind = $mainMod, mouse_down, workspace, e+1
-bind = $mainMod, mouse_up, workspace, e-1</pre>
-    </div>
+bind = $mainMod, mouse_up, workspace, e-1
 
-    <div class="config-section">
-        <div class="file-path">~/.config/waybar/config</div>
-        <button onclick="copyConfig('waybar-config')">Copy to Clipboard</button>
-        <pre id="waybar-config">{
+# Toggle waybar
+bind = $mainMod SHIFT, SPACE, exec, killall -SIGUSR1 waybar</pre>
+        </div>
+
+        <div id="waybar-config" class="config-section">
+            <div class="file-path">~/.config/waybar/config</div>
+            <div class="file-description">Waybar status bar configuration (JSON)</div>
+            <button onclick="copyConfig('waybar-conf')">Copy to Clipboard</button>
+            <pre id="waybar-conf">{
     "layer": "top",
     "position": "top",
     "height": 40,
     "spacing": 4,
+    "exclusive": true,
+    "gtk-layer-shell": true,
     
-    "modules-left": ["hyprland/workspaces"],
+    "modules-left": ["hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
     "modules-right": ["cpu", "memory", "network", "pulseaudio", "battery", "tray"],
     
     "hyprland/workspaces": {
         "format": "{id}",
         "on-click": "activate",
+        "active-only": false,
+        "all-outputs": false,
         "format-icons": {
+            "urgent": "",
             "active": "",
             "default": ""
         },
@@ -294,33 +1153,62 @@ bind = $mainMod, mouse_up, workspace, e-1</pre>
         }
     },
     
+    "hyprland/window": {
+        "format": "{}",
+        "separate-outputs": true,
+        "max-length": 50
+    },
+    
     "clock": {
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "interval": 1,
         "format": "{:%a %d %b  %I:%M %p}",
-        "on-click": "notify-send \"$(cal)\""
+        "format-alt": "{:%Y-%m-%d  %H:%M:%S}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "year",
+            "mode-mon-col": 3,
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "on-click-right": "mode",
+            "format": {
+                "months": "<span color='#ffead3'><b>{}</b></span>",
+                "days": "<span color='#ecc6d9'><b>{}</b></span>",
+                "weeks": "<span color='#99ffdd'><b>W{}</b></span>",
+                "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
+                "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+            }
+        }
     },
     
     "cpu": {
+        "interval": 2,
         "format": " {usage}%",
-        "tooltip": false,
+        "format-alt": " {avg_frequency}GHz",
+        "tooltip": true,
         "on-click": "foot -e btop"
     },
     
     "memory": {
-        "format": " {}%",
-        "tooltip-format": "Memory: {used:0.1f}G/{total:0.1f}G"
+        "interval": 2,
+        "format": " {percentage}%",
+        "format-alt": " {used:0.1f}G/{total:0.1f}G",
+        "tooltip": true,
+        "tooltip-format": "Memory: {used:0.1f}G/{total:0.1f}G\nSwap: {swapUsed:0.1f}G/{swapTotal:0.1f}G"
     },
     
     "network": {
+        "interval": 2,
         "format-wifi": " {signalStrength}%",
-        "format-ethernet": "󰈀",
-        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n{essid}",
-        "format-linked": "{ifname} (No IP) ",
-        "format-disconnected": "⚠",
-        "on-click": "foot -e nmtui"
+        "format-ethernet": "󰈀 {ifname}",
+        "format-linked": " {ifname} (No IP)",
+        "format-disconnected": "⚠ Disconnected",
+        "format-alt": "{ifname}: {ipaddr}/{cidr}",
+        "tooltip-format": "{ifname}\n{ipaddr}/{cidr}\n↑ {bandwidthUpBits} ↓ {bandwidthDownBits}",
+        "on-click-right": "foot -e nmtui"
     },
     
     "pulseaudio": {
+        "scroll-step": 5,
         "format": "{icon} {volume}%",
         "format-bluetooth": "{icon} {volume}%",
         "format-bluetooth-muted": "󰝟 {icon}",
@@ -336,10 +1224,11 @@ bind = $mainMod, mouse_up, workspace, e-1</pre>
         },
         "on-click": "pavucontrol",
         "on-click-right": "pamixer -t",
-        "scroll-step": 5
+        "on-click-middle": "playerctl play-pause"
     },
     
     "battery": {
+        "interval": 30,
         "states": {
             "warning": 30,
             "critical": 15
@@ -347,21 +1236,24 @@ bind = $mainMod, mouse_up, workspace, e-1</pre>
         "format": "{icon} {capacity}%",
         "format-charging": "󰂄 {capacity}%",
         "format-plugged": " {capacity}%",
-        "format-alt": "{time} {icon}",
-        "format-icons": ["", "", "", "", ""]
+        "format-alt": "{icon} {time}",
+        "format-icons": ["", "", "", "", ""],
+        "tooltip-format": "{timeTo}\n{power}W"
     },
     
     "tray": {
-        "icon-size": 21,
-        "spacing": 10
+        "icon-size": 18,
+        "spacing": 10,
+        "show-passive-items": true
     }
 }</pre>
-    </div>
+        </div>
 
-    <div class="config-section">
-        <div class="file-path">~/.config/waybar/style.css</div>
-        <button onclick="copyConfig('waybar-style')">Copy to Clipboard</button>
-        <pre id="waybar-style">/* Waybar Style - Phase 1 (Sonokai Theme) */
+        <div class="config-section">
+            <div class="file-path">~/.config/waybar/style.css</div>
+            <div class="file-description">Waybar styling (Sonokai theme)</div>
+            <button onclick="copyConfig('waybar-css')">Copy to Clipboard</button>
+            <pre id="waybar-css">/* Waybar Sonokai Theme */
 
 * {
     font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free";
@@ -370,7 +1262,7 @@ bind = $mainMod, mouse_up, workspace, e-1</pre>
 }
 
 window#waybar {
-    background-color: rgba(44, 46, 52, 0.9);  /* #2c2e34 with transparency */
+    background-color: rgba(44, 46, 52, 0.95);  /* #2c2e34 */
     color: #e1e3e4;
     transition-property: background-color;
     transition-duration: .5s;
@@ -392,12 +1284,13 @@ window#waybar.hidden {
     color: #e1e3e4;
     border-radius: 6px;
     border: 2px solid transparent;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.68);
 }
 
 #workspaces button:hover {
     background-color: rgba(65, 69, 80, 1);
     border-color: #76cce0;
+    color: #76cce0;
 }
 
 #workspaces button.active {
@@ -409,6 +1302,13 @@ window#waybar.hidden {
 #workspaces button.urgent {
     background-color: #f39660;
     color: #2c2e34;
+    animation: blink 0.5s linear infinite alternate;
+}
+
+/* Window title */
+#window {
+    margin: 0 8px;
+    color: #b39df3;
 }
 
 /* Common module styling */
@@ -419,16 +1319,17 @@ window#waybar.hidden {
 #network,
 #pulseaudio,
 #tray {
-    padding: 0 10px;
-    margin: 4px 2px;
-    background-color: rgba(54, 57, 68, 0.8);  /* #363944 */
-    border-radius: 6px;
+    padding: 0 12px;
+    margin: 4px 3px;
+    background-color: rgba(54, 57, 68, 0.9);  /* #363944 */
+    border-radius: 8px;
 }
 
 /* Clock */
 #clock {
     color: #e7c664;
     font-weight: bold;
+    background-color: rgba(54, 57, 68, 0.9);
 }
 
 /* CPU */
@@ -438,15 +1339,28 @@ window#waybar.hidden {
 
 #cpu.warning {
     color: #e7c664;
+    background-color: rgba(231, 198, 100, 0.2);
 }
 
 #cpu.critical {
     color: #fc5d7c;
+    background-color: rgba(252, 93, 124, 0.2);
+    animation: blink 0.5s linear infinite alternate;
 }
 
 /* Memory */
 #memory {
     color: #b39df3;
+}
+
+#memory.warning {
+    color: #e7c664;
+    background-color: rgba(231, 198, 100, 0.2);
+}
+
+#memory.critical {
+    color: #fc5d7c;
+    background-color: rgba(252, 93, 124, 0.2);
 }
 
 /* Network */
@@ -456,6 +1370,15 @@ window#waybar.hidden {
 
 #network.disconnected {
     color: #fc5d7c;
+    background-color: rgba(252, 93, 124, 0.2);
+}
+
+#network.wifi {
+    color: #9ed072;
+}
+
+#network.ethernet {
+    color: #76cce0;
 }
 
 /* Audio */
@@ -465,6 +1388,7 @@ window#waybar.hidden {
 
 #pulseaudio.muted {
     color: #7f8490;
+    background-color: rgba(127, 132, 144, 0.2);
 }
 
 /* Battery */
@@ -475,20 +1399,23 @@ window#waybar.hidden {
 #battery.charging,
 #battery.plugged {
     color: #76cce0;
+    background-color: rgba(118, 204, 224, 0.2);
 }
 
 #battery.warning:not(.charging) {
     color: #e7c664;
+    background-color: rgba(231, 198, 100, 0.2);
 }
 
 #battery.critical:not(.charging) {
     color: #fc5d7c;
+    background-color: rgba(252, 93, 124, 0.2);
     animation: blink 0.5s linear infinite alternate;
 }
 
 /* Tray */
 #tray {
-    background-color: rgba(54, 57, 68, 0.8);
+    background-color: rgba(54, 57, 68, 0.9);
 }
 
 #tray > .passive {
@@ -502,65 +1429,91 @@ window#waybar.hidden {
 /* Animations */
 @keyframes blink {
     to {
+        background-color: rgba(252, 93, 124, 0.5);
         color: #2c2e34;
-        background-color: #fc5d7c;
     }
 }
 
 /* Tooltip styling */
 tooltip {
-    background-color: rgba(44, 46, 52, 0.95);
-    border: 1px solid #76cce0;
-    border-radius: 6px;
+    background-color: rgba(44, 46, 52, 0.98);
+    border: 2px solid #76cce0;
+    border-radius: 8px;
+    padding: 8px;
 }
 
 tooltip label {
     color: #e1e3e4;
-}</pre>
-    </div>
+    padding: 5px;
+}
 
-    <div class="config-section">
-        <div class="file-path">~/.config/foot/foot.ini</div>
-        <button onclick="copyConfig('foot-config')">Copy to Clipboard</button>
-        <pre id="foot-config"># Foot Terminal Configuration - Phase 1
-# Basic Sonokai theme with essential settings
+/* Custom module background on hover */
+#clock:hover,
+#battery:hover,
+#cpu:hover,
+#memory:hover,
+#network:hover,
+#pulseaudio:hover {
+    background-color: rgba(65, 69, 80, 0.9);
+    border: 1px solid #76cce0;
+}</pre>
+        </div>
+
+        <div id="foot-config" class="config-section">
+            <div class="file-path">~/.config/foot/foot.ini</div>
+            <div class="file-description">Foot terminal configuration</div>
+            <button onclick="copyConfig('foot-ini')">Copy to Clipboard</button>
+            <pre id="foot-ini"># Foot Terminal Configuration
+# Sonokai theme matching kitty config
 
 [main]
 font=JetBrainsMono Nerd Font:size=11
+font-bold=JetBrainsMono Nerd Font:style=Bold:size=11
+font-italic=JetBrainsMono Nerd Font:style=Italic:size=11
+font-bold-italic=JetBrainsMono Nerd Font:style=Bold Italic:size=11
 dpi-aware=yes
 pad=8x8
+initial-window-size-chars=120x30
+initial-window-mode=windowed
 
 [bell]
 urgent=no
 notify=no
+command=
+command-focused=no
 
 [scrollback]
 lines=10000
+multiplier=3.0
 
 [url]
-launch=firefox ${url}
+launch=xdg-open ${url}
 protocols=http, https, ftp, ftps, file, gemini, gopher
+uri-characters=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.,~:;/?#@!$&%*+="'()[]
 
 [cursor]
 style=beam
 blink=no
+beam-thickness=1.5
 
 [mouse]
 hide-when-typing=yes
+alternate-scroll-mode=yes
 
 # Sonokai Color Scheme
 [colors]
+alpha=0.95
 background=2c2e34
 foreground=e1e3e4
 
 # Normal colors
 regular0=181a1c  # black
-regular1=fc5d7c  # red
-regular2=9ed072  # green
-regular3=e7c664  # yellow
-regular4=76cce0  # blue
-regular5=b39df3  # magenta
-regular6=f39660  # cyan/orange
+regular1=fc5d7c  # red (originally ff6578)
+regular2=9ed072  # green (originally 9dd274)
+regular3=e7c664  # yellow (originally eacb64)
+regular4=76cce0  # blue (originally 72cce8)
+regular5=b39df3  # magenta (originally ba9cf3)
+regular6=f39660  # cyan/orange (originally f69c5e)
 regular7=e1e3e4  # white
 
 # Bright colors
@@ -577,141 +1530,1384 @@ bright7=e1e3e4   # bright white
 selection-background=3d4455
 selection-foreground=e1e3e4
 
-# Cursor colors
-cursor=e1e3e4
-cursor-text-color=2c2e34
+# Jump label colors
+jump-labels=1e1e1e e7c664
+urls=76cce0
+
+[csd]
+preferred=server
+size=26
+font=JetBrainsMono Nerd Font:size=10
+color=2c2e34 e1e3e4
+hide-when-maximized=no
+double-click-to-maximize=yes
+button-width=26
+button-color=7f8490 e1e3e4
+button-hover-color=e1e3e4 2c2e34
+button-minimize-color=e7c664 1e1e1e
+button-maximize-color=9ed072 1e1e1e  
+button-close-color=fc5d7c e1e3e4
 
 [key-bindings]
-# Basic clipboard operations
-clipboard-copy=Control+Shift+c
-clipboard-paste=Control+Shift+v
+# Clipboard
+clipboard-copy=Control+Shift+c Control+Insert
+clipboard-paste=Control+Shift+v Shift+Insert
+
+# Scrollback
+scrollback-up-page=Shift+Page_Up
+scrollback-up-half-page=Control+Shift+u
+scrollback-up-line=Control+Shift+k
+scrollback-down-page=Shift+Page_Down  
+scrollback-down-half-page=Control+Shift+d
+scrollback-down-line=Control+Shift+j
+scrollback-home=Control+Shift+Home
+scrollback-end=Control+Shift+End
+
+# Search
+search-start=Control+Shift+f
+search-up=Control+Shift+n
+search-down=Control+Shift+p
 
 # Font size
 font-increase=Control+plus Control+equal Control+KP_Add
 font-decrease=Control+minus Control+KP_Subtract
 font-reset=Control+0 Control+KP_0
 
-# Scrolling
-scrollback-up-page=Shift+Page_Up
-scrollback-down-page=Shift+Page_Down
-scrollback-up-half-page=Control+Shift+u
-scrollback-down-half-page=Control+Shift+d
+# Terminal
+spawn-terminal=Control+Shift+Return
+fullscreen=F11
+reset=Control+Shift+r
 
-# Search
-search-start=Control+Shift+f
+# URLs
 show-urls-launch=Control+Shift+u
+show-urls-copy=Control+Shift+y
 
-# New instance in current working directory
-spawn-terminal=Control+Shift+Return</pre>
-    </div>
+[search-bindings]
+find-prev=Control+Shift+n
+find-next=Control+Shift+p
+cancel=Control+g Control+c Escape
 
-    <div class="config-section">
-        <div class="file-path">~/.config/fish/config.fish</div>
-        <button onclick="copyConfig('fish-config')">Copy to Clipboard</button>
-        <pre id="fish-config"># Fish Shell Configuration - Phase 1
-# Basic setup with essential aliases from zsh config
+[url-bindings]
+cancel=Control+g Control+c Control+d Escape
 
-# Disable greeting
-set -g fish_greeting
+[text-bindings]
+# vim-like bindings in scrollback
+\x1b[1;5D=\x1b[H        # Control+Left -> Home
+\x1b[1;5C=\x1b[F        # Control+Right -> End
 
-# Initialize starship prompt
-starship init fish | source
+[mouse-bindings]
+# Right click to paste
+primary-paste=BTN_MIDDLE
+select-extend=Control+BTN_LEFT
+select-extend-character-wise=Control+Shift+BTN_LEFT
+select-word=BTN_LEFT-2
+select-row=BTN_LEFT-3</pre>
+        </div>
 
-# Initialize zoxide
-zoxide init fish | source
+        <div id="fish-config" class="config-section">
+            <div class="file-path">~/.config/fish/config.fish</div>
+            <div class="file-description">Fish shell user configuration</div>
+            <button onclick="copyConfig('fish-conf')">Copy to Clipboard</button>
+            <pre id="fish-conf"># Fish Shell Configuration
+# Personal settings and overrides
 
-# Essential aliases from zsh config
+# Only add user-specific settings here
+# System-wide settings are in /etc/nixos/modules/shell.nix
 
-# Directory navigation
-alias home="cd ~"
-alias ..="cd .."
-alias x="exit"
+# Additional aliases (personal preferences)
+alias vim="hx"  # Use helix instead of vim
+alias gss="git status -s"
+alias gcm="git commit -m"
+alias gca="git commit --amend"
+alias gco="git checkout"
+alias gb="git branch"
+alias gba="git branch -a"
+alias gbd="git branch -d"
+alias gf="git fetch"
+alias gr="git rebase"
+alias gri="git rebase -i"
+alias grc="git rebase --continue"
+alias gra="git rebase --abort"
 
-# Git aliases
-alias add="git add"
-alias commit="git commit"
-alias pull="git pull"
-alias stat="git status"
-alias gdiff="git diff HEAD"
-alias push="git push"
-alias g="lazygit"
+# Custom functions
 
-# System aliases
-alias n="yazi"
-
-# SSH with proper TERM
-alias ssh="env TERM=xterm-256color ssh"
-
-# Color scheme environment variables (Sonokai)
-set -gx BLACK 0xff181819
-set -gx WHITE 0xffe2e2e3
-set -gx RED 0xfffc5d7c
-set -gx GREEN 0xff9ed072
-set -gx BLUE 0xff76cce0
-set -gx YELLOW 0xffe7c664
-set -gx ORANGE 0xfff39660
-set -gx MAGENTA 0xffb39df3
-set -gx GREY 0xff7f8490
-set -gx TRANSPARENT 0x00000000
-set -gx BG0 0xff2c2e34
-set -gx BG1 0xff363944
-set -gx BG2 0xff414550
-
-# Environment variables
-set -gx EDITOR "hx"
-set -gx VISUAL "hx"
-set -gx BROWSER "firefox"
-set -gx XDG_CONFIG_HOME "$HOME/.config"
-
-# Enhanced directory listing
-alias ls="eza --icons"
-alias ll="eza -la --icons"
-alias la="eza -a --icons"
-alias lt="eza --tree --icons"
-
-# Modern replacements
-alias cat="bat"
-alias find="fd"
-alias grep="rg"
-
-# Quick edits
-alias conf="cd ~/.config"
-alias dots="cd ~/dotfiles"
-
-# System management
-alias rebuild="sudo nixos-rebuild switch"
-alias update="sudo nix-channel --update && sudo nixos-rebuild switch"
-alias nixgc="sudo nix-collect-garbage -d"  # Changed from 'gc' to avoid conflict
-
-# Function to change directory and list contents
-function cd
-    builtin cd $argv
+# Quick project navigation
+function proj
+    cd ~/projects/$argv
     and ls
 end
 
-# Function for quick navigation with zoxide
-function z
-    __zoxide_z $argv
-    and ls
+# Create directory and cd into it
+function mkcd
+    mkdir -p $argv
+    and cd $argv
 end
 
-# Quick git log (from zsh config)
-function glog
-    git log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+# Quick system update
+function sysup
+    echo "Updating system..."
+    sudo nix-channel --update
+    and sudo nixos-rebuild switch --upgrade
+    and echo "System updated successfully!"
 end
 
-# Fish-specific keybindings
-bind \cf 'zi'  # Ctrl+F for interactive zoxide</pre>
-    </div>
+# Clean system
+function sysclean
+    echo "Cleaning system..."
+    sudo nix-collect-garbage -d
+    and sudo nix-store --optimize
+    and echo "System cleaned!"
+end
+
+# Git push with upstream
+function gpu
+    git push -u origin (git branch --show-current)
+end
+
+# Weather
+function weather
+    curl "wttr.in/$argv"
+end
+
+# Personal environment variables
+set -gx PROJECTS "$HOME/projects"
+set -gx SCRIPTS "$HOME/scripts"
+set -gx NOTES "$HOME/notes"
+
+# Path additions (if needed)
+# fish_add_path $HOME/.local/bin
+# fish_add_path $HOME/scripts
+
+# Load any local/private configurations
+if test -f ~/.config/fish/local.fish
+    source ~/.config/fish/local.fish
+end
+
+# Greeting (optional - uncomment if you want a custom greeting)
+# function fish_greeting
+#     echo "Welcome back, $USER!"
+#     echo "Today is" (date +"%A, %B %d, %Y")
+# end</pre>
+        </div>
+    </section>
+
+    <section id="phase2" class="section">
+        <h2>Phase 2: Enhanced Configuration</h2>
+        
+        <div class="note">
+            📋 These configurations add more advanced features and customizations
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/hypr/scripts/autostart.sh</div>
+            <div class="file-description">Autostart script for additional services</div>
+            <button onclick="copyConfig('autostart-sh')">Copy to Clipboard</button>
+            <pre id="autostart-sh">#!/usr/bin/env bash
+# Hyprland autostart script
+
+# Wait for Hyprland to fully start
+sleep 2
+
+# Set wallpaper
+swww img ~/Pictures/Wallpapers/wallpaper.jpg --transition-type fade &
+
+# Start clipboard manager
+wl-paste --type text --watch cliphist store &
+wl-paste --type image --watch cliphist store &
+
+# Start idle manager
+swayidle -w \
+    timeout 300 'swaylock -f' \
+    timeout 600 'hyprctl dispatch dpms off' \
+    resume 'hyprctl dispatch dpms on' \
+    before-sleep 'swaylock -f' &
+
+# Start notification daemon if not running
+pgrep -x dunst > /dev/null || dunst &
+
+# Start authentication agent
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+
+# Network manager applet
+nm-applet --indicator &
+
+# Auto-mount USB drives
+udiskie &
+
+# Night light (blue light filter)
+# wlsunset -l 40.7 -L -74.0 &  # Set your latitude/longitude</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/waybar/scripts/workspace-icons.sh</div>
+            <div class="file-description">Script to show app icons in workspaces</div>
+            <button onclick="copyConfig('workspace-icons-sh')">Copy to Clipboard</button>
+            <pre id="workspace-icons-sh">#!/usr/bin/env bash
+# Get app icons for each workspace
+
+get_icon() {
+    case "$1" in
+        "firefox") echo "" ;;
+        "foot") echo "" ;;
+        "kitty") echo "" ;;
+        "code") echo "󰨞" ;;
+        "discord") echo "󰙯" ;;
+        "slack") echo "󰒱" ;;
+        "spotify") echo "" ;;
+        "vlc") echo "󰕼" ;;
+        "mpv") echo "" ;;
+        "thunar") echo "" ;;
+        "nautilus") echo "" ;;
+        "libreoffice") echo "" ;;
+        "gimp") echo "" ;;
+        "inkscape") echo "" ;;
+        *) echo "" ;;
+    esac
+}
+
+# Get windows for workspace
+workspace=$1
+windows=$(hyprctl clients -j | jq -r ".[] | select(.workspace.id == $workspace) | .class" | tr '[:upper:]' '[:lower:]')
+
+icons=""
+for window in $windows; do
+    icon=$(get_icon "$window")
+    if [ -n "$icon" ]; then
+        icons="$icons $icon"
+    fi
+done
+
+echo "$icons"</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/swaylock/config</div>
+            <div class="file-description">Swaylock configuration for screen locking</div>
+            <button onclick="copyConfig('swaylock-config')">Copy to Clipboard</button>
+            <pre id="swaylock-config"># Swaylock configuration
+# Sonokai themed lock screen
+
+# Colors
+color=2c2e34ff
+bs-hl-color=fc5d7cff
+key-hl-color=76cce0ff
+ring-color=363944ff
+ring-clear-color=9ed072ff
+ring-ver-color=76cce0ff
+ring-wrong-color=fc5d7cff
+separator-color=00000000
+text-color=e1e3e4ff
+text-clear-color=e1e3e4ff
+text-ver-color=e1e3e4ff
+text-wrong-color=e1e3e4ff
+
+# Ring
+line-color=00000000
+line-clear-color=00000000
+line-ver-color=00000000
+line-wrong-color=00000000
+inside-color=2c2e3488
+inside-clear-color=9ed07288
+inside-ver-color=76cce088
+inside-wrong-color=fc5d7c88
+ring-clear-color=9ed072ff
+ring-ver-color=76cce0ff
+ring-wrong-color=fc5d7cff
+
+# Text
+font=JetBrainsMono Nerd Font
+font-size=24
+text-clear=Unlocked!
+text-ver=Verifying...
+text-wrong=Wrong!
+
+# Other
+indicator-radius=100
+indicator-thickness=20
+show-failed-attempts
+ignore-empty-password
+hide-keyboard-layout
+
+# Effects
+clock
+timestr=%I:%M %p
+datestr=%A, %B %d
+effect-blur=7x5
+effect-vignette=0.5:0.5
+fade-in=0.3
+
+# Image (optional - comment out for solid color)
+# image=~/Pictures/Wallpapers/lockscreen.jpg
+# scaling=fill</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/dunst/dunstrc</div>
+            <div class="file-description">Notification daemon configuration</div>
+            <button onclick="copyConfig('dunstrc')">Copy to Clipboard</button>
+            <pre id="dunstrc"># Dunst configuration (Sonokai theme)
+
+[global]
+    # Display
+    monitor = 0
+    follow = mouse
+    width = 350
+    height = 200
+    origin = top-right
+    offset = 10x50
+    scale = 0
+    notification_limit = 0
+
+    # Progress bar
+    progress_bar = true
+    progress_bar_height = 10
+    progress_bar_frame_width = 1
+    progress_bar_min_width = 150
+    progress_bar_max_width = 300
+
+    # Appearance
+    transparency = 10
+    separator_height = 2
+    padding = 10
+    horizontal_padding = 10
+    text_icon_padding = 0
+    frame_width = 2
+    frame_color = "#76cce0"
+    separator_color = frame
+    sort = yes
+    idle_threshold = 120
+
+    # Text
+    font = JetBrainsMono Nerd Font 10
+    line_height = 0
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    vertical_alignment = center
+    show_age_threshold = 60
+    ellipsize = middle
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = false
+    show_indicators = yes
+
+    # Icons
+    icon_position = left
+    min_icon_size = 0
+    max_icon_size = 64
+    icon_path = /usr/share/icons/Papirus-Dark/16x16/status/:/usr/share/icons/Papirus-Dark/16x16/devices/
+
+    # History
+    sticky_history = yes
+    history_length = 20
+
+    # Misc
+    browser = /usr/bin/firefox
+    always_run_script = true
+    title = Dunst
+    class = Dunst
+    corner_radius = 8
+    ignore_dbusclose = false
+
+    # Mouse
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = close_all
+
+[urgency_low]
+    background = "#2c2e34"
+    foreground = "#e1e3e4"
+    frame_color = "#363944"
+    timeout = 5
+
+[urgency_normal]
+    background = "#363944"
+    foreground = "#e1e3e4"
+    frame_color = "#76cce0"
+    timeout = 10
+
+[urgency_critical]
+    background = "#fc5d7c"
+    foreground = "#2c2e34"
+    frame_color = "#fc5d7c"
+    timeout = 0
+
+# App-specific rules
+[spotify]
+    appname = Spotify
+    format = "<b>Now Playing</b>\n%s\n%b"
+    background = "#363944"
+    foreground = "#9ed072"
+    frame_color = "#9ed072"
+
+[discord]
+    appname = discord
+    format = "<b>%s</b>\n%b"
+    background = "#363944"
+    foreground = "#b39df3"
+    frame_color = "#b39df3"</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/rofi/config.rasi</div>
+            <div class="file-description">Rofi launcher configuration with Sonokai theme</div>
+            <button onclick="copyConfig('rofi-config')">Copy to Clipboard</button>
+            <pre id="rofi-config">/* Rofi Configuration - Sonokai Theme */
+
+configuration {
+    modi: "drun,run,window,ssh";
+    font: "JetBrainsMono Nerd Font 12";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    display-drun: " Apps";
+    display-run: " Run";
+    display-window: " Windows";
+    display-ssh: " SSH";
+    drun-display-format: "{name}";
+    sidebar-mode: true;
+    hover-select: true;
+    me-select-entry: "";
+    me-accept-entry: "MousePrimary";
+}
+
+* {
+    /* Sonokai colors */
+    bg0:     #2c2e34;
+    bg1:     #363944;
+    bg2:     #414550;
+    fg:      #e1e3e4;
+    red:     #fc5d7c;
+    green:   #9ed072;
+    yellow:  #e7c664;
+    blue:    #76cce0;
+    magenta: #b39df3;
+    cyan:    #f39660;
+    
+    background-color: transparent;
+    text-color: @fg;
+}
+
+window {
+    transparency: "real";
+    background-color: @bg0;
+    border: 2px;
+    border-color: @blue;
+    border-radius: 8px;
+    width: 750px;
+    padding: 20px;
+}
+
+mainbox {
+    background-color: transparent;
+    children: [inputbar, message, listview, mode-switcher];
+    spacing: 20px;
+}
+
+inputbar {
+    background-color: @bg1;
+    border-radius: 8px;
+    padding: 10px;
+    children: [prompt, entry];
+}
+
+prompt {
+    background-color: transparent;
+    text-color: @blue;
+    padding: 0px 10px 0px 0px;
+}
+
+entry {
+    background-color: transparent;
+    text-color: @fg;
+    placeholder: "Search...";
+    placeholder-color: @bg2;
+}
+
+listview {
+    background-color: transparent;
+    columns: 2;
+    lines: 8;
+    spacing: 10px;
+    cycle: true;
+    dynamic: true;
+    layout: vertical;
+}
+
+element {
+    background-color: @bg1;
+    border-radius: 8px;
+    padding: 10px;
+    spacing: 10px;
+    orientation: horizontal;
+}
+
+element-icon {
+    size: 32px;
+    background-color: transparent;
+}
+
+element-text {
+    background-color: transparent;
+    text-color: @fg;
+    vertical-align: 0.5;
+}
+
+element.selected {
+    background-color: @bg2;
+    border: 2px;
+    border-color: @blue;
+}
+
+element.selected.active {
+    background-color: @blue;
+    text-color: @bg0;
+}
+
+element.alternate {
+    background-color: @bg1;
+}
+
+mode-switcher {
+    background-color: @bg1;
+    border-radius: 8px;
+    padding: 5px;
+}
+
+button {
+    background-color: transparent;
+    text-color: @fg;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+button.selected {
+    background-color: @blue;
+    text-color: @bg0;
+}
+
+message {
+    background-color: @bg1;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+textbox {
+    background-color: transparent;
+    text-color: @fg;
+}</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/starship.toml</div>
+            <div class="file-description">Enhanced Starship prompt configuration</div>
+            <button onclick="copyConfig('starship-toml')">Copy to Clipboard</button>
+            <pre id="starship-toml"># Starship prompt configuration
+
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Format
+format = """
+[](#9ed072)\
+$os\
+$username\
+[](bg:#76cce0 fg:#9ed072)\
+$directory\
+[](fg:#76cce0 bg:#b39df3)\
+$git_branch\
+$git_status\
+[](fg:#b39df3 bg:#e7c664)\
+$c\
+$elixir\
+$elm\
+$golang\
+$haskell\
+$java\
+$julia\
+$nodejs\
+$nim\
+$python\
+$rust\
+[](fg:#e7c664 bg:#fc5d7c)\
+$docker_context\
+[](fg:#fc5d7c bg:#363944)\
+$time\
+[ ](fg:#363944)\
+\n$character
+"""
+
+# Right format
+right_format = """
+$cmd_duration\
+$status\
+"""
+
+# Modules configuration
+[username]
+show_always = true
+style_user = "bg:#9ed072 fg:#2c2e34"
+style_root = "bg:#9ed072 fg:#2c2e34"
+format = '[ $user ]($style)'
+disabled = false
+
+[os]
+style = "bg:#9ed072 fg:#2c2e34"
+disabled = false
+
+[os.symbols]
+Alpine = " "
+Amazon = " "
+Android = " "
+Arch = " "
+CentOS = " "
+Debian = " "
+Fedora = " "
+FreeBSD = " "
+Gentoo = " "
+Linux = " "
+Macos = " "
+Manjaro = " "
+Mint = " "
+NixOS = " "
+OpenBSD = " "
+openSUSE = " "
+Pop = " "
+Raspbian = " "
+RedHat = " "
+SUSE = " "
+Ubuntu = " "
+Unknown = " "
+Windows = " "
+
+[directory]
+style = "bg:#76cce0 fg:#2c2e34"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+read_only = " 󰌾"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
+
+[git_branch]
+symbol = ""
+style = "bg:#b39df3 fg:#2c2e34"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bg:#b39df3 fg:#2c2e34"
+format = '[$all_status$ahead_behind ]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:#e7c664 fg:#2c2e34"
+format = '[ $symbol ($version) ]($style)'
+
+[rust]
+symbol = ""
+style = "bg:#e7c664 fg:#2c2e34"
+format = '[ $symbol ($version) ]($style)'
+
+[golang]
+symbol = ""
+style = "bg:#e7c664 fg:#2c2e34"
+format = '[ $symbol ($version) ]($style)'
+
+[python]
+symbol = ""
+style = "bg:#e7c664 fg:#2c2e34"
+format = '[ $symbol ($version) ]($style)'
+
+[docker_context]
+symbol = ""
+style = "bg:#fc5d7c fg:#2c2e34"
+format = '[ $symbol $context ]($style)'
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:#363944 fg:#e1e3e4"
+format = '[ $time ]($style)'
+
+[character]
+success_symbol = '[➜](bold fg:#9ed072)'
+error_symbol = '[➜](bold fg:#fc5d7c)'
+vicmd_symbol = '[V](bold fg:#9ed072)'
+
+[cmd_duration]
+min_time = 500
+format = '[ $duration](bold fg:#e7c664)'
+
+[status]
+style = "fg:#fc5d7c"
+symbol = "✖"
+format = '[$symbol $status]($style) '
+disabled = false</pre>
+        </div>
+    </section>
+
+    <section id="phase3" class="section">
+        <h2>Phase 3: Advanced Customization</h2>
+        
+        <div class="note">
+            🚀 These configurations add the final touches to match your macOS workflow
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/waybar/modules/menu-toggle.sh</div>
+            <div class="file-description">Script to toggle between workspace and menu view</div>
+            <button onclick="copyConfig('menu-toggle-sh')">Copy to Clipboard</button>
+            <pre id="menu-toggle-sh">#!/usr/bin/env bash
+# Toggle between workspace view and app menu view in waybar
+
+STATE_FILE="/tmp/waybar-menu-state"
+CONFIG_DIR="$HOME/.config/waybar"
+
+# Check current state
+if [ -f "$STATE_FILE" ]; then
+    STATE=$(cat "$STATE_FILE")
+else
+    STATE="workspaces"
+fi
+
+# Toggle state
+if [ "$STATE" = "workspaces" ]; then
+    # Switch to menu view
+    echo "menu" > "$STATE_FILE"
+    
+    # Get current app
+    APP=$(hyprctl activewindow -j | jq -r '.class')
+    
+    # Update waybar config to show menus
+    cat > "$CONFIG_DIR/config-menu" << EOF
+{
+    "layer": "top",
+    "position": "top",
+    "height": 40,
+    "modules-left": ["custom/menu-toggle", "custom/app-name", "custom/app-menus"],
+    "modules-center": ["clock"],
+    "modules-right": ["cpu", "memory", "network", "pulseaudio", "battery", "tray"],
+    
+    "custom/menu-toggle": {
+        "format": " Menu",
+        "on-click": "$CONFIG_DIR/modules/menu-toggle.sh"
+    },
+    
+    "custom/app-name": {
+        "exec": "echo $APP",
+        "format": " {}",
+        "interval": 1
+    },
+    
+    "custom/app-menus": {
+        "exec": "$CONFIG_DIR/modules/get-app-menus.sh",
+        "format": "{}",
+        "return-type": "json",
+        "interval": 1
+    }
+}
+EOF
+    
+    # Reload waybar with menu config
+    pkill waybar
+    waybar -c "$CONFIG_DIR/config-menu" &
+else
+    # Switch back to workspaces view
+    echo "workspaces" > "$STATE_FILE"
+    
+    # Reload waybar with normal config
+    pkill waybar
+    waybar &
+fi</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/yazi/yazi.toml</div>
+            <div class="file-description">Yazi file manager configuration</div>
+            <button onclick="copyConfig('yazi-toml')">Copy to Clipboard</button>
+            <pre id="yazi-toml"># Yazi configuration
+
+[manager]
+# Layout
+ratio = [1, 4, 3]
+sort_by = "natural"
+sort_sensitive = false
+sort_reverse = false
+sort_dir_first = true
+linemode = "size"
+show_hidden = true
+show_symlink = true
+
+# Scrolling
+scrolloff = 5
+
+[preview]
+# File preview
+tab_size = 2
+max_width = 600
+max_height = 900
+cache_dir = "~/.cache/yazi"
+
+# Image preview
+image_filter = "lanczos3"
+image_quality = 75
+
+[opener]
+# Default applications
+text = [
+    { exec = 'hx "$@"', desc = "Helix" },
+    { exec = 'nvim "$@"', desc = "Neovim" },
+    { exec = 'kate "$@"', desc = "Kate" },
+]
+
+image = [
+    { exec = 'imv "$@"', desc = "imv" },
+    { exec = 'feh "$@"', desc = "feh" },
+]
+
+video = [
+    { exec = 'mpv "$@"', desc = "MPV" },
+    { exec = 'vlc "$@"', desc = "VLC" },
+]
+
+audio = [
+    { exec = 'mpv "$@"', desc = "MPV" },
+    { exec = 'vlc "$@"', desc = "VLC" },
+]
+
+pdf = [
+    { exec = 'zathura "$@"', desc = "Zathura" },
+    { exec = 'firefox "$@"', desc = "Firefox" },
+]
+
+# Fallback
+fallback = [
+    { exec = 'xdg-open "$@"', desc = "Default" },
+]
+
+[tasks]
+micro_workers = 5
+macro_workers = 10
+bizarre_retry = 5
+
+[log]
+enabled = false</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/yazi/keymap.toml</div>
+            <div class="file-description">Yazi keybindings matching nnn/vim style</div>
+            <button onclick="copyConfig('yazi-keymap')">Copy to Clipboard</button>
+            <pre id="yazi-keymap"># Yazi keymap configuration
+
+[manager]
+
+# Navigation (vim-style)
+keymap = [
+    { on = ["j"], exec = "arrow -1", desc = "Move cursor up" },
+    { on = ["k"], exec = "arrow 1", desc = "Move cursor down" },
+    { on = ["h"], exec = "leave", desc = "Go to parent directory" },
+    { on = ["l"], exec = "enter", desc = "Enter directory or open file" },
+    
+    # Fast navigation
+    { on = ["g", "g"], exec = "arrow -99999999", desc = "Go to top" },
+    { on = ["G"], exec = "arrow 99999999", desc = "Go to bottom" },
+    { on = ["<C-u>"], exec = "arrow -50%", desc = "Move up half page" },
+    { on = ["<C-d>"], exec = "arrow 50%", desc = "Move down half page" },
+    
+    # Searching
+    { on = ["/"], exec = "find", desc = "Find" },
+    { on = ["n"], exec = "find_arrow", desc = "Next match" },
+    { on = ["N"], exec = "find_arrow -previous", desc = "Previous match" },
+    
+    # Selection
+    { on = ["<Space>"], exec = "select --state=none", desc = "Toggle selection" },
+    { on = ["v"], exec = "visual_mode", desc = "Enter visual mode" },
+    { on = ["V"], exec = "visual_mode --unset", desc = "Exit visual mode" },
+    { on = ["<C-a>"], exec = "select_all --state=true", desc = "Select all" },
+    { on = ["<C-r>"], exec = "select_all --state=none", desc = "Deselect all" },
+    
+    # Operations
+    { on = ["o"], exec = "open", desc = "Open" },
+    { on = ["O"], exec = "open --interactive", desc = "Open interactively" },
+    { on = ["<Enter>"], exec = "open", desc = "Open" },
+    { on = ["y"], exec = "yank", desc = "Yank/copy" },
+    { on = ["x"], exec = "yank --cut", desc = "Cut" },
+    { on = ["p"], exec = "paste", desc = "Paste" },
+    { on = ["P"], exec = "paste --force", desc = "Paste (overwrite)" },
+    { on = ["d"], exec = "remove", desc = "Delete" },
+    { on = ["D"], exec = "remove --permanently", desc = "Delete permanently" },
+    
+    # Create
+    { on = ["a"], exec = "create", desc = "Create file/directory" },
+    { on = ["r"], exec = "rename", desc = "Rename" },
+    
+    # Tabs
+    { on = ["t"], exec = "tab_create --current", desc = "New tab" },
+    { on = ["1"], exec = "tab_switch 0", desc = "Switch to tab 1" },
+    { on = ["2"], exec = "tab_switch 1", desc = "Switch to tab 2" },
+    { on = ["3"], exec = "tab_switch 2", desc = "Switch to tab 3" },
+    { on = ["4"], exec = "tab_switch 3", desc = "Switch to tab 4" },
+    { on = ["5"], exec = "tab_switch 4", desc = "Switch to tab 5" },
+    
+    # Misc
+    { on = ["."], exec = "hidden toggle", desc = "Toggle hidden files" },
+    { on = ["s"], exec = "sort", desc = "Sort" },
+    { on = ["?"], exec = "help", desc = "Help" },
+    { on = ["q"], exec = "quit", desc = "Quit" },
+    { on = ["Q"], exec = "quit --no-cwd-file", desc = "Quit without writing cwd" },
+    { on = ["<C-c>"], exec = "close", desc = "Cancel" },
+    { on = ["z", "h"], exec = "hidden toggle", desc = "Toggle hidden" },
+    { on = ["z", "i"], exec = "linemode size", desc = "Show size" },
+    { on = ["z", "m"], exec = "linemode mtime", desc = "Show mtime" },
+    { on = ["z", "p"], exec = "linemode permissions", desc = "Show permissions" },
+]
+
+[tasks]
+keymap = [
+    { on = ["j"], exec = "arrow -1", desc = "Move up" },
+    { on = ["k"], exec = "arrow 1", desc = "Move down" },
+    { on = ["<Enter>"], exec = "inspect", desc = "Inspect" },
+    { on = ["x"], exec = "cancel", desc = "Cancel" },
+    { on = ["~"], exec = "help", desc = "Help" },
+    { on = ["<C-q>"], exec = "close", desc = "Close" },
+]
+
+[select]
+keymap = [
+    { on = ["j"], exec = "arrow -1", desc = "Move up" },
+    { on = ["k"], exec = "arrow 1", desc = "Move down" },
+    { on = ["<Enter>"], exec = "run", desc = "Run" },
+    { on = ["<C-q>"], exec = "close", desc = "Cancel" },
+]
+
+[input]
+keymap = [
+    { on = ["<C-q>"], exec = "close", desc = "Cancel" },
+    { on = ["<Enter>"], exec = "close --submit", desc = "Submit" },
+    { on = ["<Esc>"], exec = "escape", desc = "Escape" },
+]</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/yazi/theme.toml</div>
+            <div class="file-description">Yazi Sonokai theme</div>
+            <button onclick="copyConfig('yazi-theme')">Copy to Clipboard</button>
+            <pre id="yazi-theme"># Yazi Sonokai Theme
+
+[manager]
+# Syntax highlighting
+cwd = { fg = "#e7c664" }
+
+# Hovered
+hovered = { reversed = true }
+preview_hovered = { underline = true }
+
+# Find
+find_keyword = { fg = "#e7c664", bold = true, italic = true, underline = true }
+find_position = { fg = "#b39df3", bg = "reset", bold = true, italic = true }
+
+# Marker
+marker_copied = { fg = "#9ed072", bg = "#9ed072" }
+marker_cut = { fg = "#fc5d7c", bg = "#fc5d7c" }
+marker_selected = { fg = "#76cce0", bg = "#76cce0" }
+
+# Tab
+tab_active = { fg = "#2c2e34", bg = "#76cce0" }
+tab_inactive = { fg = "#e1e3e4", bg = "#363944" }
+tab_width = 1
+
+# Count
+count_copied = { fg = "#2c2e34", bg = "#9ed072" }
+count_cut = { fg = "#2c2e34", bg = "#fc5d7c" }
+count_selected = { fg = "#2c2e34", bg = "#76cce0" }
+
+# Border
+border_symbol = "│"
+border_style = { fg = "#414550" }
+
+# Highlighting
+syntect_theme = "~/.config/yazi/Sonokai.tmTheme"
+
+[status]
+separator_open = ""
+separator_close = ""
+separator_style = { fg = "#363944", bg = "#363944" }
+
+# Mode
+mode_normal = { fg = "#2c2e34", bg = "#76cce0", bold = true }
+mode_select = { fg = "#2c2e34", bg = "#9ed072", bold = true }
+mode_unset = { fg = "#2c2e34", bg = "#fc5d7c", bold = true }
+
+# Progress
+progress_label = { fg = "#e1e3e4", bold = true }
+progress_normal = { fg = "#76cce0", bg = "#363944" }
+progress_error = { fg = "#fc5d7c", bg = "#363944" }
+
+# Permissions
+permissions_t = { fg = "#76cce0" }
+permissions_r = { fg = "#e7c664" }
+permissions_w = { fg = "#fc5d7c" }
+permissions_x = { fg = "#9ed072" }
+permissions_s = { fg = "#414550" }
+
+[input]
+border = { fg = "#76cce0" }
+title = {}
+value = {}
+selected = { reversed = true }
+
+[select]
+border = { fg = "#76cce0" }
+active = { fg = "#b39df3", bold = true }
+inactive = {}
+
+[tasks]
+border = { fg = "#76cce0" }
+title = {}
+hovered = { fg = "#b39df3", underline = true }
+
+[which]
+cols = 3
+mask = { bg = "#2c2e34" }
+cand = { fg = "#76cce0" }
+rest = { fg = "#7f8490" }
+desc = { fg = "#b39df3" }
+separator = "  "
+separator_style = { fg = "#363944" }
+
+[filetype]
+rules = [
+    # Images
+    { name = "*.jpg", fg = "#b39df3" },
+    { name = "*.jpeg", fg = "#b39df3" },
+    { name = "*.png", fg = "#b39df3" },
+    { name = "*.gif", fg = "#b39df3" },
+    { name = "*.webp", fg = "#b39df3" },
+    { name = "*.svg", fg = "#b39df3" },
+    
+    # Videos
+    { name = "*.mp4", fg = "#fc5d7c" },
+    { name = "*.mkv", fg = "#fc5d7c" },
+    { name = "*.avi", fg = "#fc5d7c" },
+    { name = "*.mov", fg = "#fc5d7c" },
+    
+    # Audio
+    { name = "*.mp3", fg = "#f39660" },
+    { name = "*.flac", fg = "#f39660" },
+    { name = "*.wav", fg = "#f39660" },
+    { name = "*.ogg", fg = "#f39660" },
+    
+    # Archives
+    { name = "*.zip", fg = "#e7c664" },
+    { name = "*.tar", fg = "#e7c664" },
+    { name = "*.gz", fg = "#e7c664" },
+    { name = "*.7z", fg = "#e7c664" },
+    { name = "*.rar", fg = "#e7c664" },
+    
+    # Documents
+    { name = "*.pdf", fg = "#fc5d7c" },
+    { name = "*.doc", fg = "#76cce0" },
+    { name = "*.docx", fg = "#76cce0" },
+    
+    # Code
+    { name = "*.sh", fg = "#9ed072" },
+    { name = "*.py", fg = "#76cce0" },
+    { name = "*.js", fg = "#e7c664" },
+    { name = "*.rs", fg = "#f39660" },
+    { name = "*.go", fg = "#76cce0" },
+    { name = "*.cpp", fg = "#fc5d7c" },
+    { name = "*.c", fg = "#fc5d7c" },
+    { name = "*.h", fg = "#fc5d7c" },
+    { name = "*.nix", fg = "#76cce0" },
+    
+    # Configs
+    { name = "*.toml", fg = "#9ed072" },
+    { name = "*.yaml", fg = "#9ed072" },
+    { name = "*.yml", fg = "#9ed072" },
+    { name = "*.json", fg = "#9ed072" },
+    { name = "*.conf", fg = "#9ed072" },
+    
+    # Special
+    { name = "*", is = "directory", fg = "#76cce0", bold = true },
+    { name = "*", is = "link", fg = "#b39df3", underline = true },
+]</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/helix/languages.toml</div>
+            <div class="file-description">Helix language server configuration</div>
+            <button onclick="copyConfig('helix-languages')">Copy to Clipboard</button>
+            <pre id="helix-languages"># Helix languages configuration
+
+[[language]]
+name = "nix"
+scope = "source.nix"
+injection-regex = "nix"
+file-types = ["nix"]
+comment-token = "#"
+language-server = { command = "nil" }
+indent = { tab-width = 2, unit = "  " }
+auto-format = true
+formatter = { command = "nixpkgs-fmt" }
+
+[[language]]
+name = "rust"
+auto-format = true
+formatter = { command = "rustfmt" }
+
+[[language]]
+name = "python"
+language-server = { command = "pylsp" }
+auto-format = true
+formatter = { command = "black", args = ["-", "-q"] }
+
+[[language]]
+name = "typescript"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+
+[[language]]
+name = "javascript"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "javascript"] }
+
+[[language]]
+name = "json"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "json"] }
+
+[[language]]
+name = "html"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "html"] }
+
+[[language]]
+name = "css"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "css"] }
+
+[[language]]
+name = "markdown"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "markdown"] }
+
+[[language]]
+name = "yaml"
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "yaml"] }
+
+[[language]]
+name = "toml"
+auto-format = true
+formatter = { command = "taplo", args = ["fmt", "-"] }
+
+[[language]]
+name = "fish"
+scope = "source.fish"
+injection-regex = "fish"
+file-types = ["fish"]
+comment-token = "#"
+indent = { tab-width = 4, unit = "    " }
+language-server = { command = "fish-lsp" }</pre>
+        </div>
+
+        <div class="config-section">
+            <div class="file-path">~/.config/btop/btop.conf</div>
+            <div class="file-description">Btop++ system monitor configuration</div>
+            <button onclick="copyConfig('btop-conf')">Copy to Clipboard</button>
+            <pre id="btop-conf"># Btop configuration file
+
+# Color theme
+color_theme = "Default"
+
+# Update time in milliseconds
+update_ms = 1000
+
+# Processes sorting
+proc_sorting = "cpu lazy"
+
+# Reverse sorting order
+proc_reversed = False
+
+# Show processes as tree
+proc_tree = True
+
+# Use colors in process list
+proc_colors = True
+
+# Process gradients
+proc_gradient = True
+
+# Process command line
+proc_per_core = False
+
+# Process memory as graphs
+proc_mem_bytes = True
+
+# CPU graph settings
+cpu_graph_upper = "total"
+cpu_graph_lower = "total"
+
+# CPU core load graph
+cpu_invert_lower = True
+cpu_single_graph = False
+
+# Show CPU frequency
+show_cpu_freq = True
+
+# Show CPU temperature
+check_temp = True
+cpu_sensor = "Auto"
+show_coretemp = True
+temp_scale = "celsius"
+
+# Show CPU stats
+show_cpu_info = True
+show_cpu_stats = True
+
+# Memory display
+show_mem_info = True
+mem_graphs = True
+show_swap = True
+
+# Disk display
+show_disks = True
+use_fstab = True
+disk_free_priv = False
+show_io_stat = True
+io_mode = False
+io_graph_combined = False
+
+# Network display
+net_download = "10M"
+net_upload = "10M"
+net_auto = True
+net_sync = False
+
+# Battery display
+show_battery = True
+
+# Theme settings
+theme_background = True
+truecolor = True
+rounded_corners = True
+graph_symbol = "braille"
+
+# Layout presets (0-9)
+preset = "0"
+
+# Log level
+log_level = "WARNING"</pre>
+        </div>
+    </section>
+
+    <section id="installation" class="section">
+        <h2>Installation Steps</h2>
+        
+        <div class="success">
+            ✅ Complete Installation Guide
+        </div>
+
+        <h3>Step 1: System Configuration</h3>
+        <div class="command">
+# Create modules directory
+sudo mkdir -p /etc/nixos/modules
+
+# Edit main configuration
+sudo kate /etc/nixos/configuration.nix
+
+# Edit each module file
+sudo kate /etc/nixos/modules/hardware.nix
+sudo kate /etc/nixos/modules/boot.nix
+# ... etc for each module
+
+# IMPORTANT: Adjust these in the files:
+# - users.nix: Change 'mike' to your username
+# - networking.nix: Change hostname
+# - hardware.nix: Choose Intel or AMD CPU
+# - configuration.nix: Set your timezone
+
+# Test configuration
+sudo nixos-rebuild test
+
+# If successful, apply
+sudo nixos-rebuild switch
+        </div>
+
+        <h3>Step 2: User Configuration</h3>
+        <div class="command">
+# Create config directories
+mkdir -p ~/.config/hypr
+mkdir -p ~/.config/waybar
+mkdir -p ~/.config/foot
+mkdir -p ~/.config/fish
+
+# Copy configurations using kate
+kate ~/.config/hypr/hyprland.conf
+kate ~/.config/waybar/config
+kate ~/.config/waybar/style.css
+kate ~/.config/foot/foot.ini
+kate ~/.config/fish/config.fish
+
+# Set permissions
+chmod +x ~/.config/waybar/config
+        </div>
+
+        <h3>Step 3: Post-Installation</h3>
+        <div class="command">
+# Reboot
+sudo reboot
+
+# After reboot:
+# 1. Login with your username
+# 2. Password is "changeme" - change it immediately:
+passwd
+
+# Test everything is working:
+# - Alt+Return: Open terminal
+# - Alt+D: Open app launcher
+# - Alt+1-9: Switch workspaces
+        </div>
+
+        <h3>Troubleshooting</h3>
+        <div class="note">
+            <strong>If Hyprland doesn't start:</strong>
+            <ul>
+                <li>Check TTY2 (Ctrl+Alt+F2) for error messages</li>
+                <li>Verify config location: ~/.config/hypr/hyprland.conf</li>
+                <li>Check logs: /tmp/hypr/*/hyprland.log</li>
+            </ul>
+            
+            <strong>If waybar doesn't appear:</strong>
+            <ul>
+                <li>Run manually: waybar</li>
+                <li>Check for config errors</li>
+                <li>Verify all fonts are installed</li>
+            </ul>
+        </div>
+    </section>
 
     <script>
         function copyConfig(elementId) {
             const text = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
+                // Visual feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.background = '#9ed072';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#76cce0';
+                }, 2000);
             }).catch(err => {
                 console.error('Failed to copy: ', err);
-                // Fallback for older browsers
+                // Fallback method
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
                 document.body.appendChild(textArea);
@@ -721,6 +2917,16 @@ bind \cf 'zi'  # Ctrl+F for interactive zoxide</pre>
                 alert('Copied to clipboard!');
             });
         }
+        
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
     </script>
 </body>
 </html>
