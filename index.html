@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NixOS Migration Configs</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #e0e0e0;
+        }
+        h1, h2 {
+            color: #76cce0;
+        }
+        .config-section {
+            margin-bottom: 30px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            background: #2a2a2a;
+        }
+        .file-path {
+            color: #9ed072;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #333;
+        }
+        button {
+            background: #76cce0;
+            color: #1e1e1e;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #5db0c4;
+        }
+        .warning {
+            background: #fc5d7c;
+            color: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .note {
+            background: #e7c664;
+            color: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>NixOS Migration Configuration Files</h1>
+    
+    <div class="warning">
+        ⚠️ CRITICAL: In hyprland.conf, remove or comment out "sensitivity = 0" on line 17 or your mouse won't work!
+    </div>
+    
+    <div class="note">
+        📝 Create directories first: mkdir -p ~/.config/{hyprland,waybar,foot,fish}
+    </div>
+
+    <div class="config-section">
+        <div class="file-path">~/.config/hyprland/hyprland.conf</div>
+        <button onclick="copyConfig('hyprland-config')">Copy to Clipboard</button>
+        <pre id="hyprland-config"># Hyprland Configuration - Phase 1
+# Basic functional setup matching yabai behavior
+
+# Monitor configuration
+# Adjust this based on your display setup
+monitor=,preferred,auto,1
+
+# Execute at launch
+exec-once = waybar
+exec-once = dunst
+exec-once = swww init
+
+# Input configuration
+input {
+    kb_layout = us
+    follow_mouse = 1
+    # sensitivity = 0.0    # COMMENTED OUT - remove this line entirely or set to 0.0
+    
+    touchpad {
+        natural_scroll = false
+    }
+}
+
+# General configuration
+general {
+    gaps_in = 5
+    gaps_out = 10
+    border_size = 2
+    col.active_border = rgba(9ed072ff) rgba(76cce0ff) 45deg
+    col.inactive_border = rgba(595959aa)
+    
+    layout = dwindle
+}
+
+# Decoration
+decoration {
+    rounding = 8
+    
+    active_opacity = 1.0
+    inactive_opacity = 0.8
+    
+    blur {
+        enabled = true
+        size = 3
+        passes = 1
+    }
+    
+    drop_shadow = true
+    shadow_range = 4
+    shadow_render_power = 3
+    col.shadow = rgba(1a1a1aee)
+}
+
+# Animations
+animations {
+    enabled = true
+    
+    bezier = myBezier, 0.05, 0.9, 0.1, 1.05
+    
+    animation = windows, 1, 7, myBezier
+    animation = windowsOut, 1, 7, default, popin 80%
+    animation = border, 1, 10, default
+    animation = borderangle, 1, 8, default
+    animation = fade, 1, 7, default
+    animation = workspaces, 1, 6, default
+}
+
+# Layout configuration
+dwindle {
+    pseudotile = true
+    preserve_split = true
+}
+
+master {
+    new_is_master = true
+}
+
+gestures {
+    workspace_swipe = false
+}
+
+# Window rules
+windowrulev2 = opacity 0.0 override 0.0 override,class:^(xwaylandvideobridge)$
+windowrulev2 = noanim,class:^(xwaylandvideobridge)$
+windowrulev2 = nofocus,class:^(xwaylandvideobridge)$
+windowrulev2 = noinitialfocus,class:^(xwaylandvideobridge)$
+
+# Workspace rules - 10 workspaces like yabai
+workspace = 1, default:true
+workspace = 2
+workspace = 3
+workspace = 4
+workspace = 5
+workspace = 6
+workspace = 7
+workspace = 8
+workspace = 9
+workspace = 10
+
+# Key bindings
+$mainMod = ALT
+
+# Basic window management
+bind = $mainMod, J, movefocus, l
+bind = $mainMod, K, movefocus, d
+bind = $mainMod, L, movefocus, u
+bind = $mainMod, semicolon, movefocus, r  # Ö key position on US layout
+
+# Move windows
+bind = $mainMod SHIFT, J, movewindow, l
+bind = $mainMod SHIFT, K, movewindow, d
+bind = $mainMod SHIFT, L, movewindow, u
+bind = $mainMod SHIFT, semicolon, movewindow, r
+
+# Resize windows
+bind = $mainMod CTRL, J, resizeactive, -100 0
+bind = $mainMod CTRL, K, resizeactive, 0 100
+bind = $mainMod CTRL, L, resizeactive, 0 -100
+bind = $mainMod CTRL, semicolon, resizeactive, 100 0
+
+# Workspace switching
+bind = $mainMod, 1, workspace, 1
+bind = $mainMod, 2, workspace, 2
+bind = $mainMod, 3, workspace, 3
+bind = $mainMod, 4, workspace, 4
+bind = $mainMod, 5, workspace, 5
+bind = $mainMod, 6, workspace, 6
+bind = $mainMod, 7, workspace, 7
+bind = $mainMod, 8, workspace, 8
+bind = $mainMod, 9, workspace, 9
+bind = $mainMod, 0, workspace, 10
+
+# Move to workspace
+bind = $mainMod SHIFT, 1, movetoworkspace, 1
+bind = $mainMod SHIFT, 2, movetoworkspace, 2
+bind = $mainMod SHIFT, 3, movetoworkspace, 3
+bind = $mainMod SHIFT, 4, movetoworkspace, 4
+bind = $mainMod SHIFT, 5, movetoworkspace, 5
+bind = $mainMod SHIFT, 6, movetoworkspace, 6
+bind = $mainMod SHIFT, 7, movetoworkspace, 7
+bind = $mainMod SHIFT, 8, movetoworkspace, 8
+bind = $mainMod SHIFT, 9, movetoworkspace, 9
+bind = $mainMod SHIFT, 0, movetoworkspace, 10
+
+# Window control
+bind = $mainMod, Q, killactive
+bind = $mainMod, SPACE, togglefloating
+bind = $mainMod, F, fullscreen, 0
+bind = $mainMod SHIFT, F, fullscreen, 1  # Maximize
+bind = $mainMod, P, pseudo  # Dwindle
+bind = $mainMod SHIFT, S, togglesplit  # Dwindle
+
+# Balance windows (like yabai)
+bind = $mainMod CTRL, E, exec, hyprctl dispatch layoutmsg "removemaster"
+
+# Toggle gaps
+bind = $mainMod CTRL, G, exec, hyprctl keyword general:gaps_in 5; hyprctl keyword general:gaps_out 10
+bind = $mainMod CTRL SHIFT, G, exec, hyprctl keyword general:gaps_in 0; hyprctl keyword general:gaps_out 0
+
+# Application launching
+bind = $mainMod, Return, exec, foot
+bind = $mainMod, D, exec, rofi -show drun
+bind = $mainMod SHIFT, D, exec, rofi -show run
+
+# Exit Hyprland
+bind = $mainMod SHIFT, E, exit
+
+# Screenshots
+bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
+bind = SHIFT, Print, exec, grim - | wl-copy
+
+# Volume control
+binde = , XF86AudioRaiseVolume, exec, pamixer -i 5
+binde = , XF86AudioLowerVolume, exec, pamixer -d 5
+bind = , XF86AudioMute, exec, pamixer -t
+
+# Brightness control (remove these lines if on desktop)
+binde = , XF86MonBrightnessUp, exec, brightnessctl set +10%
+binde = , XF86MonBrightnessDown, exec, brightnessctl set 10%-
+
+# Move/resize windows with mouse
+bindm = $mainMod, mouse:272, movewindow
+bindm = $mainMod, mouse:273, resizewindow
+
+# Scroll through workspaces
+bind = $mainMod, mouse_down, workspace, e+1
+bind = $mainMod, mouse_up, workspace, e-1</pre>
+    </div>
+
+    <div class="config-section">
+        <div class="file-path">~/.config/waybar/config</div>
+        <button onclick="copyConfig('waybar-config')">Copy to Clipboard</button>
+        <pre id="waybar-config">{
+    "layer": "top",
+    "position": "top",
+    "height": 40,
+    "spacing": 4,
+    
+    "modules-left": ["hyprland/workspaces"],
+    "modules-center": ["clock"],
+    "modules-right": ["cpu", "memory", "network", "pulseaudio", "battery", "tray"],
+    
+    "hyprland/workspaces": {
+        "format": "{id}",
+        "on-click": "activate",
+        "format-icons": {
+            "active": "",
+            "default": ""
+        },
+        "persistent-workspaces": {
+            "*": 10
+        }
+    },
+    
+    "clock": {
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "format": "{:%a %d %b  %I:%M %p}",
+        "on-click": "notify-send \"$(cal)\""
+    },
+    
+    "cpu": {
+        "format": " {usage}%",
+        "tooltip": false,
+        "on-click": "foot -e btop"
+    },
+    
+    "memory": {
+        "format": " {}%",
+        "tooltip-format": "Memory: {used:0.1f}G/{total:0.1f}G"
+    },
+    
+    "network": {
+        "format-wifi": " {signalStrength}%",
+        "format-ethernet": "󰈀",
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n{essid}",
+        "format-linked": "{ifname} (No IP) ",
+        "format-disconnected": "⚠",
+        "on-click": "foot -e nmtui"
+    },
+    
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-bluetooth": "{icon} {volume}%",
+        "format-bluetooth-muted": "󰝟 {icon}",
+        "format-muted": "󰝟",
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["", "", ""]
+        },
+        "on-click": "pavucontrol",
+        "on-click-right": "pamixer -t",
+        "scroll-step": 5
+    },
+    
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": " {capacity}%",
+        "format-alt": "{time} {icon}",
+        "format-icons": ["", "", "", "", ""]
+    },
+    
+    "tray": {
+        "icon-size": 21,
+        "spacing": 10
+    }
+}</pre>
+    </div>
+
+    <div class="config-section">
+        <div class="file-path">~/.config/waybar/style.css</div>
+        <button onclick="copyConfig('waybar-style')">Copy to Clipboard</button>
+        <pre id="waybar-style">/* Waybar Style - Phase 1 (Sonokai Theme) */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(44, 46, 52, 0.9);  /* #2c2e34 with transparency */
+    color: #e1e3e4;
+    transition-property: background-color;
+    transition-duration: .5s;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+/* Workspaces */
+#workspaces {
+    margin: 0 8px;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    margin: 4px 2px;
+    background-color: rgba(65, 69, 80, 0.8);  /* #414550 */
+    color: #e1e3e4;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+#workspaces button:hover {
+    background-color: rgba(65, 69, 80, 1);
+    border-color: #76cce0;
+}
+
+#workspaces button.active {
+    background-color: rgba(54, 57, 68, 1);  /* #363944 */
+    color: #fc5d7c;
+    border-color: #fc5d7c;
+}
+
+#workspaces button.urgent {
+    background-color: #f39660;
+    color: #2c2e34;
+}
+
+/* Common module styling */
+#clock,
+#battery,
+#cpu,
+#memory,
+#network,
+#pulseaudio,
+#tray {
+    padding: 0 10px;
+    margin: 4px 2px;
+    background-color: rgba(54, 57, 68, 0.8);  /* #363944 */
+    border-radius: 6px;
+}
+
+/* Clock */
+#clock {
+    color: #e7c664;
+    font-weight: bold;
+}
+
+/* CPU */
+#cpu {
+    color: #76cce0;
+}
+
+#cpu.warning {
+    color: #e7c664;
+}
+
+#cpu.critical {
+    color: #fc5d7c;
+}
+
+/* Memory */
+#memory {
+    color: #b39df3;
+}
+
+/* Network */
+#network {
+    color: #9ed072;
+}
+
+#network.disconnected {
+    color: #fc5d7c;
+}
+
+/* Audio */
+#pulseaudio {
+    color: #f39660;
+}
+
+#pulseaudio.muted {
+    color: #7f8490;
+}
+
+/* Battery */
+#battery {
+    color: #9ed072;
+}
+
+#battery.charging,
+#battery.plugged {
+    color: #76cce0;
+}
+
+#battery.warning:not(.charging) {
+    color: #e7c664;
+}
+
+#battery.critical:not(.charging) {
+    color: #fc5d7c;
+    animation: blink 0.5s linear infinite alternate;
+}
+
+/* Tray */
+#tray {
+    background-color: rgba(54, 57, 68, 0.8);
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* Animations */
+@keyframes blink {
+    to {
+        color: #2c2e34;
+        background-color: #fc5d7c;
+    }
+}
+
+/* Tooltip styling */
+tooltip {
+    background-color: rgba(44, 46, 52, 0.95);
+    border: 1px solid #76cce0;
+    border-radius: 6px;
+}
+
+tooltip label {
+    color: #e1e3e4;
+}</pre>
+    </div>
+
+    <div class="config-section">
+        <div class="file-path">~/.config/foot/foot.ini</div>
+        <button onclick="copyConfig('foot-config')">Copy to Clipboard</button>
+        <pre id="foot-config"># Foot Terminal Configuration - Phase 1
+# Basic Sonokai theme with essential settings
+
+[main]
+font=JetBrainsMono Nerd Font:size=11
+dpi-aware=yes
+pad=8x8
+
+[bell]
+urgent=no
+notify=no
+
+[scrollback]
+lines=10000
+
+[url]
+launch=firefox ${url}
+protocols=http, https, ftp, ftps, file, gemini, gopher
+
+[cursor]
+style=beam
+blink=no
+
+[mouse]
+hide-when-typing=yes
+
+# Sonokai Color Scheme
+[colors]
+background=2c2e34
+foreground=e1e3e4
+
+# Normal colors
+regular0=181a1c  # black
+regular1=fc5d7c  # red
+regular2=9ed072  # green
+regular3=e7c664  # yellow
+regular4=76cce0  # blue
+regular5=b39df3  # magenta
+regular6=f39660  # cyan/orange
+regular7=e1e3e4  # white
+
+# Bright colors
+bright0=7f8490   # bright black (grey)
+bright1=fc5d7c   # bright red
+bright2=9ed072   # bright green
+bright3=e7c664   # bright yellow
+bright4=76cce0   # bright blue
+bright5=b39df3   # bright magenta
+bright6=f39660   # bright cyan/orange
+bright7=e1e3e4   # bright white
+
+# Selection colors
+selection-background=3d4455
+selection-foreground=e1e3e4
+
+# Cursor colors
+cursor=e1e3e4
+cursor-text-color=2c2e34
+
+[key-bindings]
+# Basic clipboard operations
+clipboard-copy=Control+Shift+c
+clipboard-paste=Control+Shift+v
+
+# Font size
+font-increase=Control+plus Control+equal Control+KP_Add
+font-decrease=Control+minus Control+KP_Subtract
+font-reset=Control+0 Control+KP_0
+
+# Scrolling
+scrollback-up-page=Shift+Page_Up
+scrollback-down-page=Shift+Page_Down
+scrollback-up-half-page=Control+Shift+u
+scrollback-down-half-page=Control+Shift+d
+
+# Search
+search-start=Control+Shift+f
+show-urls-launch=Control+Shift+u
+
+# New instance in current working directory
+spawn-terminal=Control+Shift+Return</pre>
+    </div>
+
+    <div class="config-section">
+        <div class="file-path">~/.config/fish/config.fish</div>
+        <button onclick="copyConfig('fish-config')">Copy to Clipboard</button>
+        <pre id="fish-config"># Fish Shell Configuration - Phase 1
+# Basic setup with essential aliases from zsh config
+
+# Disable greeting
+set -g fish_greeting
+
+# Initialize starship prompt
+starship init fish | source
+
+# Initialize zoxide
+zoxide init fish | source
+
+# Essential aliases from zsh config
+
+# Directory navigation
+alias home="cd ~"
+alias ..="cd .."
+alias x="exit"
+
+# Git aliases
+alias add="git add"
+alias commit="git commit"
+alias pull="git pull"
+alias stat="git status"
+alias gdiff="git diff HEAD"
+alias push="git push"
+alias g="lazygit"
+
+# System aliases
+alias n="yazi"
+
+# SSH with proper TERM
+alias ssh="env TERM=xterm-256color ssh"
+
+# Color scheme environment variables (Sonokai)
+set -gx BLACK 0xff181819
+set -gx WHITE 0xffe2e2e3
+set -gx RED 0xfffc5d7c
+set -gx GREEN 0xff9ed072
+set -gx BLUE 0xff76cce0
+set -gx YELLOW 0xffe7c664
+set -gx ORANGE 0xfff39660
+set -gx MAGENTA 0xffb39df3
+set -gx GREY 0xff7f8490
+set -gx TRANSPARENT 0x00000000
+set -gx BG0 0xff2c2e34
+set -gx BG1 0xff363944
+set -gx BG2 0xff414550
+
+# Environment variables
+set -gx EDITOR "hx"
+set -gx VISUAL "hx"
+set -gx BROWSER "firefox"
+set -gx XDG_CONFIG_HOME "$HOME/.config"
+
+# Enhanced directory listing
+alias ls="eza --icons"
+alias ll="eza -la --icons"
+alias la="eza -a --icons"
+alias lt="eza --tree --icons"
+
+# Modern replacements
+alias cat="bat"
+alias find="fd"
+alias grep="rg"
+
+# Quick edits
+alias conf="cd ~/.config"
+alias dots="cd ~/dotfiles"
+
+# System management
+alias rebuild="sudo nixos-rebuild switch"
+alias update="sudo nix-channel --update && sudo nixos-rebuild switch"
+alias nixgc="sudo nix-collect-garbage -d"  # Changed from 'gc' to avoid conflict
+
+# Function to change directory and list contents
+function cd
+    builtin cd $argv
+    and ls
+end
+
+# Function for quick navigation with zoxide
+function z
+    __zoxide_z $argv
+    and ls
+end
+
+# Quick git log (from zsh config)
+function glog
+    git log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+end
+
+# Fish-specific keybindings
+bind \cf 'zi'  # Ctrl+F for interactive zoxide</pre>
+    </div>
+
+    <script>
+        function copyConfig(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
