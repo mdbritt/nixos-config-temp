@@ -1,0 +1,28 @@
+# Add these lines to your ~/.config/hypr/hyprland.conf
+
+# Cursor configuration - macOS style
+env = XCURSOR_THEME,Bibata-Modern-Classic
+env = XCURSOR_SIZE,24
+
+# Set cursor on startup
+exec-once = hyprctl setcursor Bibata-Modern-Classic 24
+
+# Alternative if you installed actual macOS cursors:
+# env = XCURSOR_THEME,macOS-BigSur
+# env = XCURSOR_SIZE,24
+# exec-once = hyprctl setcursor macOS-BigSur 24
+
+# For faster keyboard repeat (add to input section):
+input {
+    kb_layout = us
+    follow_mouse = 1
+    # sensitivity = 0  # Comment out or set to 0.0
+    
+    # Faster key repeat
+    repeat_rate = 50      # Higher = faster repeat (default 25)
+    repeat_delay = 300    # Lower = quicker start (default 600)
+    
+    touchpad {
+        natural_scroll = false
+    }
+}
